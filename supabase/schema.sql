@@ -10,8 +10,8 @@ create table if not exists public.remedial_sessions (
   id uuid primary key default gen_random_uuid(),
   access_code text unique not null,
   title text not null default 'Remedial PH XI.2 — Matriks',
-  kkm integer not null default 75 check (kkm between 1 and 100),
-  duration_minutes integer not null default 45 check (duration_minutes between 5 and 180),
+  kkm integer not null default 78 check (kkm between 1 and 100),
+  duration_minutes integer not null default 90 check (duration_minutes between 5 and 180),
   max_attempts integer not null default 3 check (max_attempts between 1 and 20),
   require_practice boolean not null default false,
   is_active boolean not null default true,
@@ -20,14 +20,14 @@ create table if not exists public.remedial_sessions (
   updated_at timestamptz not null default now()
 );
 
--- 2. Data Siswa Peserta Remedial
+-- 2. Data Siswa Peserta Remedial (Kelas XI-1 & XI-2)
 create table if not exists public.students (
   id uuid primary key default gen_random_uuid(),
-  nis text not null,
+  absen text not null,
   name text not null,
-  class_name text not null,
+  class_name text not null check (class_name in ('XI-1', 'XI-2')),
   created_at timestamptz not null default now(),
-  unique (nis, class_name)
+  unique (absen, class_name)
 );
 
 -- 3. Riwayat Pengerjaan (Mode Latihan & Ujian Remedial)

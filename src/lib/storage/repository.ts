@@ -4,6 +4,9 @@ import type {
   ExamGradeResult,
 } from '../generator/types';
 
+export type ClassName = 'XI-1' | 'XI-2';
+export const AVAILABLE_CLASSES: readonly ClassName[] = ['XI-1', 'XI-2'] as const;
+
 export interface RemedialSettings {
   accessCode: string;
   title: string;
@@ -15,9 +18,9 @@ export interface RemedialSettings {
 }
 
 export interface StudentProfile {
-  nis: string;
+  absen: string;
   name: string;
-  className: string;
+  className: ClassName;
 }
 
 export interface AttemptRecord {
@@ -49,9 +52,9 @@ export interface ActiveExamSession {
 }
 
 export interface StudentSummaryRow {
-  nis: string;
+  absen: string;
   name: string;
-  className: string;
+  className: ClassName;
   bestScore: number;
   attemptsCount: number;
   lastSubmittedAt: string;
@@ -59,34 +62,45 @@ export interface StudentSummaryRow {
   passed: boolean;
 }
 
-const SETTINGS_KEY = 'remedial_matriks_settings_v1';
-const ATTEMPTS_KEY = 'remedial_matriks_attempts_v1';
-const ACTIVE_EXAM_KEY = 'remedial_matriks_active_exam_v1';
-const PRACTICE_DONE_KEY = 'remedial_matriks_practice_done_v1';
+const SETTINGS_KEY = 'remedial_matriks_settings_v2';
+const ATTEMPTS_KEY = 'remedial_matriks_attempts_v2';
+const ACTIVE_EXAM_KEY = 'remedial_matriks_active_exam_v2';
+const PRACTICE_DONE_KEY = 'remedial_matriks_practice_done_v2';
 
 export const DEFAULT_SETTINGS: RemedialSettings = {
   accessCode: 'MATRIKS-XI',
   title: 'Remedial PH XI.2 — Matriks (Matematika Tingkat Lanjut)',
-  kkm: 75,
-  durationMinutes: 45,
+  kkm: 78,
+  durationMinutes: 90,
   maxAttempts: 3,
   requirePractice: false,
   teacherPin: 'GURU2026',
 };
 
+export function getStudentKey(student: Pick<StudentProfile, 'className' | 'absen'>): string {
+  const normalizedAbsen = String(Number.parseInt(student.absen, 10) || student.absen.trim());
+  return `${student.className}::${normalizedAbsen}`;
+}
+
+export function formatAbsen(absen: string): string {
+  const n = Number.parseInt(absen, 10);
+  if (Number.isNaN(n)) return absen.trim();
+  return String(n).padStart(2, '0');
+}
+
 const SEED_DEMO_ATTEMPTS: AttemptRecord[] = [
   {
     id: 'demo-1',
-    student: { nis: '20250101', name: 'Alya Putri Ramadhani', className: 'XI-1' },
+    student: { absen: '03', name: 'Alya Putri Ramadhani', className: 'XI-1' },
     mode: 'exam',
     seed: 1011,
     totalScore: 88,
     maxScore: 100,
     passed: true,
-    kkm: 75,
+    kkm: 78,
     startedAt: '2026-11-25T07:30:00.000Z',
-    submittedAt: '2026-11-25T08:02:15.000Z',
-    durationSeconds: 1935,
+    submittedAt: '2026-11-25T08:12:15.000Z',
+    durationSeconds: 2535,
     itemBreakdown: [
       { competencyId: 1, earned: 15, maxPoints: 15, isFullyCorrect: true },
       { competencyId: 2, earned: 15, maxPoints: 15, isFullyCorrect: true },
@@ -98,16 +112,16 @@ const SEED_DEMO_ATTEMPTS: AttemptRecord[] = [
   },
   {
     id: 'demo-2',
-    student: { nis: '20250104', name: 'Bagas Pratama Wijaya', className: 'XI-1' },
+    student: { absen: '07', name: 'Bagas Pratama Wijaya', className: 'XI-1' },
     mode: 'exam',
     seed: 1024,
     totalScore: 62,
     maxScore: 100,
     passed: false,
-    kkm: 75,
+    kkm: 78,
     startedAt: '2026-11-25T08:10:00.000Z',
-    submittedAt: '2026-11-25T08:48:40.000Z',
-    durationSeconds: 2320,
+    submittedAt: '2026-11-25T09:15:40.000Z',
+    durationSeconds: 3940,
     itemBreakdown: [
       { competencyId: 1, earned: 15, maxPoints: 15, isFullyCorrect: true },
       { competencyId: 2, earned: 11.25, maxPoints: 15, isFullyCorrect: false },
@@ -119,16 +133,16 @@ const SEED_DEMO_ATTEMPTS: AttemptRecord[] = [
   },
   {
     id: 'demo-3',
-    student: { nis: '20250104', name: 'Bagas Pratama Wijaya', className: 'XI-1' },
+    student: { absen: '07', name: 'Bagas Pratama Wijaya', className: 'XI-1' },
     mode: 'exam',
     seed: 1089,
     totalScore: 81.5,
     maxScore: 100,
     passed: true,
-    kkm: 75,
+    kkm: 78,
     startedAt: '2026-11-25T13:00:00.000Z',
-    submittedAt: '2026-11-25T13:34:10.000Z',
-    durationSeconds: 2050,
+    submittedAt: '2026-11-25T13:52:10.000Z',
+    durationSeconds: 3130,
     itemBreakdown: [
       { competencyId: 1, earned: 15, maxPoints: 15, isFullyCorrect: true },
       { competencyId: 2, earned: 15, maxPoints: 15, isFullyCorrect: true },
@@ -140,16 +154,16 @@ const SEED_DEMO_ATTEMPTS: AttemptRecord[] = [
   },
   {
     id: 'demo-4',
-    student: { nis: '20250208', name: 'Citra Dewi Lestari', className: 'XI-2' },
+    student: { absen: '12', name: 'Citra Dewi Lestari', className: 'XI-2' },
     mode: 'exam',
     seed: 2042,
     totalScore: 95,
     maxScore: 100,
     passed: true,
-    kkm: 75,
+    kkm: 78,
     startedAt: '2026-11-25T09:00:00.000Z',
-    submittedAt: '2026-11-25T09:29:50.000Z',
-    durationSeconds: 1790,
+    submittedAt: '2026-11-25T09:49:50.000Z',
+    durationSeconds: 2990,
     itemBreakdown: [
       { competencyId: 1, earned: 15, maxPoints: 15, isFullyCorrect: true },
       { competencyId: 2, earned: 15, maxPoints: 15, isFullyCorrect: true },
@@ -161,16 +175,16 @@ const SEED_DEMO_ATTEMPTS: AttemptRecord[] = [
   },
   {
     id: 'demo-5',
-    student: { nis: '20250215', name: 'Dimas Aditya Nugroho', className: 'XI-2' },
+    student: { absen: '19', name: 'Dimas Aditya Nugroho', className: 'XI-2' },
     mode: 'exam',
     seed: 2099,
     totalScore: 54,
     maxScore: 100,
     passed: false,
-    kkm: 75,
+    kkm: 78,
     startedAt: '2026-11-25T10:15:00.000Z',
-    submittedAt: '2026-11-25T10:55:20.000Z',
-    durationSeconds: 2420,
+    submittedAt: '2026-11-25T11:25:20.000Z',
+    durationSeconds: 4220,
     itemBreakdown: [
       { competencyId: 1, earned: 12, maxPoints: 15, isFullyCorrect: false },
       { competencyId: 2, earned: 15, maxPoints: 15, isFullyCorrect: true },
@@ -219,7 +233,10 @@ export function recordExamAttempt(params: {
   const durationSeconds = Math.max(1, Math.round((now - params.startedAt) / 1000));
   const record: AttemptRecord = {
     id: `att-${now}-${Math.random().toString(36).slice(2, 7)}`,
-    student: params.student,
+    student: {
+      ...params.student,
+      absen: formatAbsen(params.student.absen),
+    },
     mode: 'exam',
     seed: params.seed,
     totalScore: params.grade.totalScore,
@@ -243,19 +260,19 @@ export function recordExamAttempt(params: {
   return record;
 }
 
-export function getStudentExamAttempts(nis: string): AttemptRecord[] {
-  const normalized = nis.trim().toLowerCase();
+export function getStudentExamAttempts(student: StudentProfile): AttemptRecord[] {
+  const targetKey = getStudentKey(student);
   return loadAttempts().filter(
-    (a) => a.mode === 'exam' && a.student.nis.trim().toLowerCase() === normalized
+    (a) => a.mode === 'exam' && getStudentKey(a.student) === targetKey
   );
 }
 
-export function loadActiveExam(nis: string): ActiveExamSession | null {
+export function loadActiveExam(student: StudentProfile): ActiveExamSession | null {
   try {
     const raw = localStorage.getItem(ACTIVE_EXAM_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw) as ActiveExamSession;
-    if (session.student.nis.trim().toLowerCase() !== nis.trim().toLowerCase()) {
+    if (getStudentKey(session.student) !== getStudentKey(student)) {
       return null;
     }
     return session;
@@ -272,23 +289,23 @@ export function clearActiveExam(): void {
   localStorage.removeItem(ACTIVE_EXAM_KEY);
 }
 
-export function markPracticeCompleted(nis: string): void {
+export function markPracticeCompleted(student: StudentProfile): void {
   try {
     const raw = localStorage.getItem(PRACTICE_DONE_KEY);
     const set = new Set<string>(raw ? JSON.parse(raw) : []);
-    set.add(nis.trim().toLowerCase());
+    set.add(getStudentKey(student));
     localStorage.setItem(PRACTICE_DONE_KEY, JSON.stringify([...set]));
   } catch {
     // ignore
   }
 }
 
-export function hasCompletedPractice(nis: string): boolean {
+export function hasCompletedPractice(student: StudentProfile): boolean {
   try {
     const raw = localStorage.getItem(PRACTICE_DONE_KEY);
     if (!raw) return false;
     const list = JSON.parse(raw) as string[];
-    return list.includes(nis.trim().toLowerCase());
+    return list.includes(getStudentKey(student));
   } catch {
     return false;
   }
@@ -301,11 +318,11 @@ export function summarizeStudents(
   const map = new Map<string, StudentSummaryRow>();
   for (const att of attempts) {
     if (att.mode !== 'exam') continue;
-    const key = att.student.nis.trim().toLowerCase();
+    const key = getStudentKey(att.student);
     const prev = map.get(key);
     if (!prev) {
       map.set(key, {
-        nis: att.student.nis,
+        absen: formatAbsen(att.student.absen),
         name: att.student.name,
         className: att.student.className,
         bestScore: att.totalScore,
@@ -329,12 +346,16 @@ export function summarizeStudents(
       });
     }
   }
-  return [...map.values()].sort((a, b) => a.className.localeCompare(b.className) || a.name.localeCompare(b.name));
+  return [...map.values()].sort(
+    (a, b) =>
+      a.className.localeCompare(b.className) ||
+      Number.parseInt(a.absen, 10) - Number.parseInt(b.absen, 10)
+  );
 }
 
 export function exportSummaryToCsv(rows: StudentSummaryRow[], kkm: number): string {
   const headers = [
-    'NIS',
+    'No. Absen',
     'Nama Siswa',
     'Kelas',
     'Nilai Tertinggi',
@@ -356,7 +377,7 @@ export function exportSummaryToCsv(rows: StudentSummaryRow[], kkm: number): stri
     headers.map(escapeCsv).join(','),
     ...rows.map((r) =>
       [
-        r.nis,
+        r.absen,
         r.name,
         r.className,
         r.bestScore,
@@ -370,6 +391,5 @@ export function exportSummaryToCsv(rows: StudentSummaryRow[], kkm: number): stri
     ),
   ];
 
-  // UTF-8 BOM agar Microsoft Excel membaca karakter dengan rapi
   return `\uFEFF${lines.join('\r\n')}`;
 }

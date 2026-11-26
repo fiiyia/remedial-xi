@@ -62,7 +62,7 @@ export function App() {
 
   const handleStartExam = () => {
     if (!student) return;
-    const existing = loadActiveExam(student.nis);
+    const existing = loadActiveExam(student);
     if (existing) {
       setView({ kind: 'exam', session: existing });
       return;
@@ -116,21 +116,21 @@ export function App() {
     setView({ kind: 'login' });
   };
 
-  const studentAttempts = student ? getStudentExamAttempts(student.nis) : [];
+  const studentAttempts = student ? getStudentExamAttempts(student) : [];
   const remainingAttempts = Math.max(0, settings.maxAttempts - studentAttempts.length);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen text-violet-950">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-violet-200/80 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-xs">
               <Grid3x3 className="h-4 w-4" aria-hidden="true" />
             </div>
             <div>
-              <span className="text-sm font-bold text-slate-900">Web Remedial Matriks</span>
-              <span className="ml-2 hidden rounded bg-indigo-50 px-1.5 py-0.5 text-[11px] font-semibold text-indigo-700 sm:inline-block">
+              <span className="text-sm font-bold text-violet-950">Web Remedial Matriks</span>
+              <span className="ml-2 hidden rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700 sm:inline-block">
                 PH XI.2
               </span>
             </div>
@@ -139,14 +139,14 @@ export function App() {
           {view.kind !== 'login' && (
             <div className="flex items-center gap-3">
               {student && (
-                <span className="hidden text-xs font-medium text-slate-600 sm:inline">
-                  {student.name} ({student.className})
+                <span className="hidden rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800 sm:inline">
+                  {student.name} • {student.className} (Absen {student.absen})
                 </span>
               )}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-50"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Keluar</span>
@@ -173,8 +173,8 @@ export function App() {
             student={student}
             settings={settings}
             attempts={studentAttempts}
-            activeExam={loadActiveExam(student.nis)}
-            practiceDone={hasCompletedPractice(student.nis)}
+            activeExam={loadActiveExam(student)}
+            practiceDone={hasCompletedPractice(student)}
             onStartPractice={(competencyId) =>
               setView({ kind: 'practice', competencyId })
             }
@@ -185,7 +185,7 @@ export function App() {
         {view.kind === 'practice' && student && (
           <PracticeView
             initialCompetencyId={view.competencyId}
-            onCompletePractice={() => markPracticeCompleted(student.nis)}
+            onCompletePractice={() => markPracticeCompleted(student)}
             onBack={() => setView({ kind: 'student_home' })}
           />
         )}

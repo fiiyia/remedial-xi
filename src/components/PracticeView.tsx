@@ -82,8 +82,8 @@ export function PracticeView({
             onClick={() => handleSelectCompetency(c.id)}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
               c.id === competencyId
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-300'
+                ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
+                : 'border border-violet-200 bg-white/90 text-violet-800 hover:border-violet-400'
             }`}
           >
             {c.id}. {c.shortTitle}

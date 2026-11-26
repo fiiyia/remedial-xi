@@ -62,10 +62,11 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
   return (
     <div className="mx-auto max-w-4xl space-y-5 px-4 py-6">
       {/* Sticky Exam Bar */}
-      <div className="sticky top-14 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-xs backdrop-blur">
+      <div className="sticky top-14 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-200/80 bg-white/90 px-4 py-3 shadow-xs backdrop-blur">
         <div>
-          <p className="text-xs font-semibold text-slate-500">
-            Ujian Remedial • {session.student.name} ({session.student.className})
+          <p className="text-xs font-semibold text-violet-700">
+            Ujian Remedial • {session.student.name} ({session.student.className} • Absen{' '}
+            {session.student.absen})
           </p>
           <p className="text-xs text-slate-600">
             Terisi: <strong>{answeredCount}</strong> / {questions.length} soal
@@ -77,7 +78,7 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
             className={`font-mono-math inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold ${
               isUrgent
                 ? 'bg-rose-100 text-rose-800 ring-1 ring-rose-300'
-                : 'bg-slate-100 text-slate-800'
+                : 'bg-violet-100/80 text-violet-900'
             }`}
             aria-live="off"
           >
@@ -88,7 +89,7 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:from-violet-700 hover:to-fuchsia-600"
           >
             <Send className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Kumpulkan</span>
@@ -108,10 +109,10 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
               onClick={() => setCurrentIndex(idx)}
               className={`h-10 min-w-10 rounded-xl px-3 text-sm font-bold transition ${
                 isCurrent
-                  ? 'bg-indigo-600 text-white shadow-xs'
+                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
                   : touched
                     ? 'border border-emerald-300 bg-emerald-50 text-emerald-800'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-300'
+                    : 'border border-violet-200 bg-white/90 text-violet-800 hover:border-violet-400'
               }`}
             >
               {idx + 1}

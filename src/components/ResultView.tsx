@@ -96,7 +96,7 @@ export function ResultView({
               <button
                 type="button"
                 onClick={onRetakeExam}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700"
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 text-sm font-semibold text-white hover:from-violet-700 hover:to-fuchsia-600"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 <span>Ulangi Ujian ({remainingAttempts}× tersisa)</span>

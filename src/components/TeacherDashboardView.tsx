@@ -10,9 +10,11 @@ import {
 } from 'lucide-react';
 import { COMPETENCIES } from '../lib/generator/types';
 import {
+  AVAILABLE_CLASSES,
   exportSummaryToCsv,
   summarizeStudents,
   type AttemptRecord,
+  type ClassName,
   type RemedialSettings,
 } from '../lib/storage/repository';
 
@@ -22,6 +24,8 @@ interface TeacherDashboardViewProps {
   onSaveSettings: (next: RemedialSettings) => void;
 }
 
+type ClassFilter = 'ALL' | ClassName;
+
 export function TeacherDashboardView({
   settings,
   attempts,
@@ -29,7 +33,7 @@ export function TeacherDashboardView({
 }: TeacherDashboardViewProps) {
   const [tab, setTab] = useState<'monitoring' | 'analytics' | 'settings'>('monitoring');
   const [searchQuery, setSearchQuery] = useState('');
-  const [classFilter, setClassFilter] = useState('ALL');
+  const [classFilter, setClassFilter] = useState<ClassFilter>('ALL');
   const [draft, setDraft] = useState<RemedialSettings>(settings);
   const [savedNotice, setSavedNotice] = useState(false);
 
@@ -38,9 +42,16 @@ export function TeacherDashboardView({
     [attempts, settings.kkm]
   );
 
-  const classes = useMemo(() => {
-    const set = new Set(summaryRows.map((r) => r.className));
-    return ['ALL', ...[...set].sort()];
+  const classCounts = useMemo(() => {
+    const xi1 = summaryRows.filter((r) => r.className === 'XI-1');
+    const xi2 = summaryRows.filter((r) => r.className === 'XI-2');
+    return {
+      all: summaryRows.length,
+      'XI-1': xi1.length,
+      'XI-1-passed': xi1.filter((r) => r.passed).length,
+      'XI-2': xi2.length,
+      'XI-2-passed': xi2.filter((r) => r.passed).length,
+    };
   }, [summaryRows]);
 
   const filteredRows = useMemo(() => {
@@ -50,34 +61,41 @@ export function TeacherDashboardView({
       const matchQuery =
         !q ||
         r.name.toLowerCase().includes(q) ||
-        r.nis.toLowerCase().includes(q) ||
+        r.absen.toLowerCase().includes(q) ||
         r.className.toLowerCase().includes(q);
       return matchClass && matchQuery;
     });
   }, [summaryRows, searchQuery, classFilter]);
 
   const stats = useMemo(() => {
-    const totalStudents = summaryRows.length;
-    const passedStudents = summaryRows.filter((r) => r.passed).length;
+    const scopeRows =
+      classFilter === 'ALL'
+        ? summaryRows
+        : summaryRows.filter((r) => r.className === classFilter);
+    const totalStudents = scopeRows.length;
+    const passedStudents = scopeRows.filter((r) => r.passed).length;
     const passRate =
       totalStudents > 0 ? Math.round((passedStudents / totalStudents) * 100) : 0;
     const avgScore =
       totalStudents > 0
-        ? (
-            summaryRows.reduce((acc, r) => acc + r.bestScore, 0) / totalStudents
-          ).toFixed(1)
+        ? (scopeRows.reduce((acc, r) => acc + r.bestScore, 0) / totalStudents).toFixed(1)
         : '0.0';
     return { totalStudents, passedStudents, passRate, avgScore };
-  }, [summaryRows]);
+  }, [summaryRows, classFilter]);
 
   const itemAnalytics = useMemo(() => {
+    const scopedAttempts =
+      classFilter === 'ALL'
+        ? attempts
+        : attempts.filter((a) => a.student.className === classFilter);
+
     return COMPETENCIES.map((comp) => {
       let earnedSum = 0;
       let maxSum = 0;
       let fullCorrectCount = 0;
       let count = 0;
 
-      for (const att of attempts) {
+      for (const att of scopedAttempts) {
         if (att.mode !== 'exam') continue;
         const item = att.itemBreakdown.find((b) => b.competencyId === comp.id);
         if (!item) continue;
@@ -97,7 +115,7 @@ export function TeacherDashboardView({
         fullPct,
       };
     });
-  }, [attempts]);
+  }, [attempts, classFilter]);
 
   const hardestTopic = useMemo(() => {
     const withData = itemAnalytics.filter((a) => a.attemptsCount > 0);
@@ -111,7 +129,8 @@ export function TeacherDashboardView({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `rekap-remedial-matriks-${new Date().toISOString().slice(0, 10)}.csv`;
+    const suffix = classFilter === 'ALL' ? 'semua-kelas' : classFilter.toLowerCase();
+    link.download = `rekap-remedial-matriks-${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -130,13 +149,13 @@ export function TeacherDashboardView({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:py-8">
-      {/* Header & KPI */}
+      {/* Header & Ekspor */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
             Dashboard Guru Matematika (Admin)
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">{settings.title}</h2>
+          <h2 className="mt-1 text-2xl font-bold text-violet-950">{settings.title}</h2>
         </div>
 
         <button
@@ -145,19 +164,71 @@ export function TeacherDashboardView({
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-emerald-700"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
-          <span>Unduh Rekap (.CSV)</span>
+          <span>
+            Unduh Rekap {classFilter === 'ALL' ? 'Semua' : classFilter} (.CSV)
+          </span>
         </button>
       </div>
 
+      {/* Pemisah Kelas XI-1 & XI-2 */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <button
+          type="button"
+          onClick={() => setClassFilter('ALL')}
+          className={`rounded-2xl border p-4 text-left transition ${
+            classFilter === 'ALL'
+              ? 'border-violet-500 bg-violet-100/80 ring-2 ring-violet-300/70'
+              : 'border-violet-200/80 bg-white/85 hover:border-violet-300'
+          }`}
+        >
+          <div className="text-xs font-semibold text-violet-700">Gabungan</div>
+          <div className="mt-0.5 text-lg font-extrabold text-violet-950">Semua Kelas</div>
+          <div className="mt-1 text-xs text-slate-600">
+            Total {classCounts.all} peserta remedial
+          </div>
+        </button>
+
+        {AVAILABLE_CLASSES.map((cls) => {
+          const active = classFilter === cls;
+          const total = classCounts[cls];
+          const passed = classCounts[`${cls}-passed`];
+          const accent =
+            cls === 'XI-1'
+              ? active
+                ? 'border-fuchsia-500 bg-fuchsia-100/70 ring-2 ring-fuchsia-300/70'
+                : 'border-fuchsia-200/80 bg-white/85 hover:border-fuchsia-300'
+              : active
+                ? 'border-sky-500 bg-sky-100/70 ring-2 ring-sky-300/70'
+                : 'border-sky-200/80 bg-white/85 hover:border-sky-300';
+          return (
+            <button
+              key={cls}
+              type="button"
+              onClick={() => setClassFilter(cls)}
+              className={`rounded-2xl border p-4 text-left transition ${accent}`}
+            >
+              <div className="text-xs font-semibold text-violet-700">Filter Khusus</div>
+              <div className="mt-0.5 text-lg font-extrabold text-violet-950">Kelas {cls}</div>
+              <div className="mt-1 text-xs text-slate-600">
+                {total} siswa • {passed} tuntas (KKM {settings.kkm})
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* KPI Ringkasan */}
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <dt className="text-xs font-medium text-slate-500">Siswa Mengikuti Remedial</dt>
-          <dd className="mt-1 text-2xl font-extrabold text-slate-900">
+        <div className="rounded-2xl border border-violet-200/80 bg-white/90 p-4 shadow-2xs">
+          <dt className="text-xs font-medium text-violet-600">
+            Peserta ({classFilter === 'ALL' ? 'XI-1 & XI-2' : classFilter})
+          </dt>
+          <dd className="mt-1 text-2xl font-extrabold text-violet-950">
             {stats.totalStudents} siswa
           </dd>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <dt className="text-xs font-medium text-slate-500">
+        <div className="rounded-2xl border border-emerald-200/80 bg-white/90 p-4 shadow-2xs">
+          <dt className="text-xs font-medium text-emerald-700">
             Tingkat Ketuntasan (KKM {settings.kkm})
           </dt>
           <dd className="mt-1 text-2xl font-extrabold text-emerald-700">
@@ -167,12 +238,12 @@ export function TeacherDashboardView({
             </span>
           </dd>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <dt className="text-xs font-medium text-slate-500">Rata-rata Nilai Tertinggi</dt>
-          <dd className="mt-1 text-2xl font-extrabold text-slate-900">{stats.avgScore}</dd>
+        <div className="rounded-2xl border border-pink-200/80 bg-white/90 p-4 shadow-2xs">
+          <dt className="text-xs font-medium text-pink-700">Rata-rata Nilai Tertinggi</dt>
+          <dd className="mt-1 text-2xl font-extrabold text-violet-950">{stats.avgScore}</dd>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <dt className="text-xs font-medium text-slate-500">Topik Paling Sulit</dt>
+        <div className="rounded-2xl border border-amber-200/80 bg-white/90 p-4 shadow-2xs">
+          <dt className="text-xs font-medium text-amber-700">Topik Paling Sulit</dt>
           <dd className="mt-1 text-sm font-bold text-rose-700">
             {hardestTopic
               ? `No. ${hardestTopic.id}: ${hardestTopic.shortTitle} (${hardestTopic.masteryPct}%)`
@@ -182,14 +253,14 @@ export function TeacherDashboardView({
       </dl>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-violet-200/80 pb-3">
         <button
           type="button"
           onClick={() => setTab('monitoring')}
           className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
             tab === 'monitoring'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
+              : 'bg-white/90 text-violet-800 ring-1 ring-violet-200 hover:bg-violet-50'
           }`}
         >
           <Users className="h-4 w-4" aria-hidden="true" />
@@ -200,8 +271,8 @@ export function TeacherDashboardView({
           onClick={() => setTab('analytics')}
           className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
             tab === 'analytics'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
+              : 'bg-white/90 text-violet-800 ring-1 ring-violet-200 hover:bg-violet-50'
           }`}
         >
           <BarChart3 className="h-4 w-4" aria-hidden="true" />
@@ -212,8 +283,8 @@ export function TeacherDashboardView({
           onClick={() => setTab('settings')}
           className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
             tab === 'settings'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
+              : 'bg-white/90 text-violet-800 ring-1 ring-violet-200 hover:bg-violet-50'
           }`}
         >
           <Settings className="h-4 w-4" aria-hidden="true" />
@@ -223,80 +294,63 @@ export function TeacherDashboardView({
 
       {/* TAB 1: MONITORING SISWA */}
       {tab === 'monitoring' && (
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <section className="space-y-4 rounded-3xl border border-violet-200/80 bg-white/90 p-5 shadow-2xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative flex-1 min-w-56">
+            <div className="relative min-w-56 flex-1">
               <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-400"
                 aria-hidden="true"
               />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama atau NIS siswa..."
-                className="h-10 w-full rounded-lg border border-slate-300 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                placeholder="Cari nama atau No. Absen siswa..."
+                className="h-10 w-full rounded-xl border border-violet-200 bg-violet-50/30 pl-9 pr-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
               />
             </div>
-
-            <div className="flex items-center gap-2">
-              <label htmlFor="class-filter" className="text-xs font-semibold text-slate-600">
-                Kelas:
-              </label>
-              <select
-                id="class-filter"
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-                className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500"
-              >
-                {classes.map((c) => (
-                  <option key={c} value={c}>
-                    {c === 'ALL' ? 'Semua Kelas' : c}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <span className="text-xs font-medium text-violet-700">
+              Menampilkan {filteredRows.length} siswa (
+              {classFilter === 'ALL' ? 'XI-1 & XI-2' : `Kelas ${classFilter}`})
+            </span>
           </div>
 
           <div
             tabIndex={0}
             role="region"
             aria-labelledby="monitoring-table-caption"
-            className="table-wrapper rounded-xl border border-slate-200"
+            className="table-wrapper rounded-2xl border border-violet-200/80"
           >
             <table className="monitoring-table text-sm">
-              <caption
-                id="monitoring-table-caption"
-                className="sr-only"
-              >
-                Daftar monitoring hasil ujian remedial siswa kelas XI
+              <caption id="monitoring-table-caption" className="sr-only">
+                Daftar monitoring hasil ujian remedial siswa kelas XI-1 dan XI-2
               </caption>
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
+              <thead className="bg-violet-50/90 text-xs uppercase tracking-wide text-violet-700">
                 <tr>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
                     Nama Siswa
                   </th>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
-                    NIS
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                    No. Absen
                   </th>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
                     Kelas
                   </th>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
                     Nilai Tertinggi
                   </th>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
                     Percobaan
                   </th>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
                     Waktu Selesai
                   </th>
-                  <th scope="col" className="border-b border-slate-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
                     Status KKM
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-violet-100/70">
                 {filteredRows.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
@@ -305,13 +359,25 @@ export function TeacherDashboardView({
                   </tr>
                 ) : (
                   filteredRows.map((row) => (
-                    <tr key={`${row.nis}-${row.className}`} className="hover:bg-slate-50/70">
-                      <th scope="row" className="px-4 py-3 font-semibold text-slate-900">
+                    <tr key={`${row.className}-${row.absen}`} className="hover:bg-violet-50/40">
+                      <th scope="row" className="px-4 py-3 font-semibold text-violet-950">
                         {row.name}
                       </th>
-                      <td className="font-mono-math px-4 py-3 text-slate-600">{row.nis}</td>
-                      <td className="px-4 py-3 text-slate-700">{row.className}</td>
-                      <td className="font-mono-math px-4 py-3 font-bold text-slate-900">
+                      <td className="font-mono-math px-4 py-3 font-semibold text-violet-700">
+                        {row.absen}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            row.className === 'XI-1'
+                              ? 'bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-200'
+                              : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'
+                          }`}
+                        >
+                          {row.className}
+                        </span>
+                      </td>
+                      <td className="font-mono-math px-4 py-3 font-bold text-violet-950">
                         {row.bestScore}
                       </td>
                       <td className="px-4 py-3 text-slate-600">{row.attemptsCount}×</td>
@@ -340,40 +406,41 @@ export function TeacherDashboardView({
 
       {/* TAB 2: ANALITIK BUTIR SOAL */}
       {tab === 'analytics' && (
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <section className="space-y-4 rounded-3xl border border-violet-200/80 bg-white/90 p-5 shadow-2xs">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Analisis Penguasaan 6 Kompetensi PH XI.2
+            <h3 className="text-base font-bold text-violet-950">
+              Analisis Penguasaan 6 Kompetensi PH XI.2 (
+              {classFilter === 'ALL' ? 'XI-1 & XI-2' : `Kelas ${classFilter}`})
             </h3>
             <p className="text-xs text-slate-600">
-              Menampilkan rata-rata persentase skor per kompetensi dari seluruh percobaan ujian
-              remedial untuk mengidentifikasi materi yang paling perlu dibahas ulang di kelas.
+              Menampilkan rata-rata persentase skor per kompetensi untuk mengidentifikasi materi
+              yang paling perlu dibahas ulang.
             </p>
           </div>
 
           <div className="space-y-3">
             {itemAnalytics.map((item) => {
               const barColor =
-                item.masteryPct >= 75
-                  ? 'bg-emerald-500'
+                item.masteryPct >= settings.kkm
+                  ? 'bg-emerald-400'
                   : item.masteryPct >= 55
-                    ? 'bg-amber-500'
-                    : 'bg-rose-500';
+                    ? 'bg-amber-400'
+                    : 'bg-rose-400';
 
               return (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-slate-200 bg-slate-50/50 p-4"
+                  className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className="text-xs font-bold text-indigo-600">
+                      <span className="text-xs font-bold text-violet-600">
                         Kompetensi {item.id} • {item.reference}
                       </span>
-                      <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
+                      <h4 className="text-sm font-bold text-violet-950">{item.title}</h4>
                     </div>
                     <div className="text-right">
-                      <div className="font-mono-math text-lg font-extrabold text-slate-900">
+                      <div className="font-mono-math text-lg font-extrabold text-violet-950">
                         {item.masteryPct}%
                       </div>
                       <div className="text-xs text-slate-500">
@@ -381,7 +448,7 @@ export function TeacherDashboardView({
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-violet-100">
                     <div
                       className={`h-full rounded-full transition-all ${barColor}`}
                       style={{ width: `${item.masteryPct}%` }}
@@ -396,10 +463,10 @@ export function TeacherDashboardView({
 
       {/* TAB 3: PENGATURAN REMEDIAL */}
       {tab === 'settings' && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <section className="rounded-3xl border border-violet-200/80 bg-white/90 p-6 shadow-2xs">
           <form onSubmit={handleSaveSettingsSubmit} className="max-w-xl space-y-4">
             <div>
-              <label htmlFor="set-title" className="block text-sm font-semibold text-slate-800">
+              <label htmlFor="set-title" className="block text-sm font-semibold text-violet-950">
                 Judul Sesi Remedial
               </label>
               <input
@@ -408,17 +475,17 @@ export function TeacherDashboardView({
                 required
                 value={draft.title}
                 onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                className="form-control mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className="form-control mt-1 h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="set-code" className="block text-sm font-semibold text-slate-800">
+                <label htmlFor="set-code" className="block text-sm font-semibold text-violet-950">
                   Kode Akses Remedial
                 </label>
                 <span className="mb-1 block text-xs text-slate-500">
-                  Dibagikan ke siswa untuk masuk.
+                  Dibagikan ke siswa XI-1 &amp; XI-2.
                 </span>
                 <input
                   id="set-code"
@@ -427,15 +494,15 @@ export function TeacherDashboardView({
                   minLength={4}
                   value={draft.accessCode}
                   onChange={(e) => setDraft({ ...draft, accessCode: e.target.value })}
-                  className="form-control font-mono-math h-11 w-full rounded-lg border border-slate-300 px-3 text-sm uppercase outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  className="form-control font-mono-math h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm uppercase outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
                 />
               </div>
 
               <div>
-                <label htmlFor="set-kkm" className="block text-sm font-semibold text-slate-800">
+                <label htmlFor="set-kkm" className="block text-sm font-semibold text-violet-950">
                   Nilai KKM (1–100)
                 </label>
-                <span className="mb-1 block text-xs text-slate-500">Default sekolah: 75</span>
+                <span className="mb-1 block text-xs text-slate-500">Default saat ini: 78</span>
                 <input
                   id="set-kkm"
                   type="number"
@@ -444,17 +511,18 @@ export function TeacherDashboardView({
                   required
                   value={draft.kkm}
                   onChange={(e) => setDraft({ ...draft, kkm: Number(e.target.value) })}
-                  className="form-control h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="set-duration"
-                  className="block text-sm font-semibold text-slate-800"
+                  className="block text-sm font-semibold text-violet-950"
                 >
                   Durasi Ujian (menit)
                 </label>
+                <span className="mb-1 block text-xs text-slate-500">Default saat ini: 90 menit</span>
                 <input
                   id="set-duration"
                   type="number"
@@ -465,17 +533,18 @@ export function TeacherDashboardView({
                   onChange={(e) =>
                     setDraft({ ...draft, durationMinutes: Number(e.target.value) })
                   }
-                  className="form-control mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="set-attempts"
-                  className="block text-sm font-semibold text-slate-800"
+                  className="block text-sm font-semibold text-violet-950"
                 >
                   Maksimal Percobaan Ujian
                 </label>
+                <span className="mb-1 block text-xs text-slate-500">Default: 3 percobaan</span>
                 <input
                   id="set-attempts"
                   type="number"
@@ -486,20 +555,20 @@ export function TeacherDashboardView({
                   onChange={(e) =>
                     setDraft({ ...draft, maxAttempts: Number(e.target.value) })
                   }
-                  className="form-control mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
                 />
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-violet-200 bg-violet-50/50 p-3.5">
               <input
                 type="checkbox"
                 checked={draft.requirePractice}
                 onChange={(e) => setDraft({ ...draft, requirePractice: e.target.checked })}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                className="mt-0.5 h-4 w-4 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
               />
               <span className="text-sm text-slate-700">
-                <strong className="block text-slate-900">
+                <strong className="block text-violet-950">
                   Wajibkan Mode Latihan sebelum Ujian Remedial
                 </strong>
                 Siswa harus memeriksa minimal 1 soal di Mode Latihan sebelum tombol Mulai Ujian
@@ -510,7 +579,7 @@ export function TeacherDashboardView({
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-indigo-700"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-semibold text-white shadow-xs transition hover:from-violet-700 hover:to-fuchsia-600"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 <span>Simpan Pengaturan</span>

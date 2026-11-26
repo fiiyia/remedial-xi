@@ -66,10 +66,10 @@ export function MatrixInputGrid({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+    <div className="rounded-2xl border border-violet-200/80 bg-violet-50/35 p-4 shadow-2xs">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm font-semibold text-slate-800">{label}</div>
-        <span className="text-xs text-slate-500">
+        <div className="text-sm font-semibold text-violet-950">{label}</div>
+        <span className="text-xs text-violet-700/80">
           {allowFraction
             ? 'Mendukung negatif & pecahan (mis. -2/5). Navigasi: Tab / Panah'
             : 'Isi angka bulat. Navigasi cepat: Tab / tombol panah'}
@@ -78,7 +78,7 @@ export function MatrixInputGrid({
 
       <div className="flex flex-wrap items-center gap-3 overflow-x-auto py-1">
         {labelLatex && (
-          <div className="text-base font-medium text-slate-800">
+          <div className="text-base font-medium text-violet-950">
             <MathBlock latex={labelLatex} />
           </div>
         )}
@@ -93,11 +93,11 @@ export function MatrixInputGrid({
             row.map((cell, c) => {
               const cellStatus = correctCells?.[r]?.[c];
               let statusClass =
-                'border-slate-300 bg-slate-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200';
+                'border-violet-200 bg-white focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200';
               if (cellStatus === true) {
-                statusClass = 'border-emerald-500 bg-emerald-50 text-emerald-900';
+                statusClass = 'border-emerald-400 bg-emerald-50 text-emerald-900';
               } else if (cellStatus === false) {
-                statusClass = 'border-rose-500 bg-rose-50 text-rose-900';
+                statusClass = 'border-rose-400 bg-rose-50 text-rose-900';
               }
 
               return (
