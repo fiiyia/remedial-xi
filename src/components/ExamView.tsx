@@ -92,7 +92,7 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#6d4c9e] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#5b3d8a]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#6c6ce5] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#5a5ad6]"
           >
             <Send className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Kumpulkan</span>
@@ -112,10 +112,10 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
               onClick={() => setCurrentIndex(idx)}
               className={`h-10 min-w-10 rounded-xl px-3 text-sm font-bold transition ${
                 isCurrent
-                  ? 'bg-[#6d4c9e] text-white'
+                  ? 'bg-[#6c6ce5] text-white'
                   : touched
-                    ? 'border border-[#c7e6d6] bg-[#ebf7f1] text-[#266b4d]'
-                    : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
+                    ? 'border border-[#bcead5] bg-[#eefbf5] text-[#28a870]'
+                    : 'border border-[#eceef8] bg-white text-[#7c7f9d] hover:border-[#cfd0f7]'
               }`}
             >
               {idx + 1}

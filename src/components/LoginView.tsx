@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, Clock, GraduationCap, ShieldCheck, Target } from 'lucide-react';
+import { Clock, GraduationCap, ShieldCheck, Target } from 'lucide-react';
 import {
   AVAILABLE_CLASSES,
   formatAbsen,
@@ -7,6 +7,7 @@ import {
   type RemedialSettings,
   type StudentProfile,
 } from '../lib/storage/repository';
+import { HeroBooksLeft, HeroBooksRight } from './TopicIllustration';
 
 interface LoginViewProps {
   settings: RemedialSettings;
@@ -60,68 +61,55 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:py-16">
-      <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
-        {/* Bagian Kiri: Pengantar yang hangat & simpel */}
-        <div className="space-y-6 lg:col-span-6">
-          <div className="flex items-center gap-3.5">
-            <img
-              src="/logo-don-bosco.png"
-              alt="Logo SMA Don Bosco II"
-              className="h-14 w-14 shrink-0 object-contain"
-            />
-            <div>
-              <p className="text-sm font-bold text-[#2c243b]">SMA Don Bosco II</p>
-              <div className="mt-0.5 inline-flex items-center gap-1.5 text-xs font-medium text-[#6d4c9e]">
-                <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Matematika Tingkat Lanjut · Kelas XI</span>
+    <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-4 py-8">
+      {/* Main Centered SkillSet-style Window Frame */}
+      <div className="soft-card overflow-hidden rounded-[28px]">
+        {/* Top Periwinkle Illustrated Banner */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#7372F3] via-[#7E7AF6] to-[#6866E6] px-6 py-7 text-white sm:px-8">
+          <div className="pointer-events-none absolute -left-10 -top-12 h-36 w-36 rounded-full bg-white/10" />
+          <div className="pointer-events-none absolute -bottom-14 right-12 h-40 w-40 rounded-full bg-white/10" />
+
+          <div className="relative flex items-center justify-between gap-4">
+            <HeroBooksLeft />
+
+            <div className="mx-auto flex flex-col items-center text-center">
+              <div className="flex items-center gap-2.5 rounded-full bg-white/15 px-3.5 py-1.5 backdrop-blur-xs">
+                <img
+                  src="/logo-don-bosco.png"
+                  alt="Logo SMA Don Bosco II"
+                  className="h-7 w-7 rounded-full bg-white/90 object-contain p-0.5"
+                />
+                <span className="text-xs font-bold tracking-wide">SMA Don Bosco II</span>
+              </div>
+              <h1 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                Web Remedial Matriks Kelas XI
+              </h1>
+              <p className="mt-1 text-xs text-white/85 sm:text-sm">
+                Matematika Tingkat Lanjut · Paket Khusus Kelas XI-1 &amp; XI-2
+              </p>
+
+              <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1">
+                  <Target className="h-3 w-3" aria-hidden="true" />
+                  KKM {settings.kkm}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1">
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  {settings.durationMinutes} Menit
+                </span>
+                <span className="rounded-full bg-white/20 px-3 py-1">
+                  6 Soal · {settings.maxAttempts}× Kesempatan
+                </span>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#2c243b] sm:text-4xl sm:leading-tight">
-              Web Remedial Matriks Kelas XI
-            </h1>
-            <p className="text-sm leading-relaxed text-[#5c536d] sm:text-base">
-              Halo! Kamu bisa berlatih dulu per topik sebelum mengerjakan ujian remedial.
-              Paket soal untuk <strong>Kelas XI-1</strong> dan <strong>Kelas XI-2</strong>{' '}
-              sudah dibedakan, jadi pastikan kamu memilih kelas yang benar ya.
-            </p>
-          </div>
-
-          {/* Info Ringkas Tanpa Kotak Ramai */}
-          <div className="flex flex-wrap gap-2.5 pt-1 text-xs font-semibold text-[#563f7a]">
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8dff4] bg-white px-3.5 py-2">
-              <Target className="h-3.5 w-3.5 text-[#6d4c9e]" aria-hidden="true" />
-              KKM {settings.kkm}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8dff4] bg-white px-3.5 py-2">
-              <Clock className="h-3.5 w-3.5 text-[#6d4c9e]" aria-hidden="true" />
-              Waktu {settings.durationMinutes} menit
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8dff4] bg-white px-3.5 py-2">
-              6 Soal · Maks. {settings.maxAttempts}× percobaan
-            </span>
-          </div>
-
-          <div className="rounded-2xl border border-[#ebe4f4] bg-[#f6f2fb]/70 p-4 text-xs leading-relaxed text-[#5c536d]">
-            <p className="font-semibold text-[#473366]">Catatan singkat:</p>
-            <p className="mt-1">
-              • <strong>Kelas XI-1</strong> mengerjakan Paket A (kesamaan matriks,{' '}
-              <span className="font-mono-math">2A − Bᵀ</span>, persamaan{' '}
-              <span className="font-mono-math">A·M = B</span>, invers{' '}
-              <span className="font-mono-math">3×3</span>, soal Koperasi &amp; Toko Kue).
-              <br />• <strong>Kelas XI-2</strong> mengerjakan Paket B (penjumlahan matriks,{' '}
-              <span className="font-mono-math">A⁻¹ × B</span>, sifat determinan, invers{' '}
-              <span className="font-mono-math">3×3</span>, soal Tiket Pentas &amp; Toko Kue).
-            </p>
+            <HeroBooksRight />
           </div>
         </div>
 
-        {/* Bagian Kanan: Form Masuk */}
-        <div className="soft-card rounded-3xl p-6 sm:p-8 lg:col-span-6">
-          <div className="mb-6 grid grid-cols-2 rounded-2xl bg-[#f4effa] p-1">
+        {/* Form Body */}
+        <div className="mx-auto max-w-lg px-6 py-7 sm:px-8 sm:py-8">
+          <div className="mb-6 grid grid-cols-2 rounded-2xl bg-[#f3f4fb] p-1">
             <button
               type="button"
               onClick={() => {
@@ -130,12 +118,12 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               }}
               className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition ${
                 role === 'student'
-                  ? 'bg-white text-[#4d3475] shadow-2xs'
-                  : 'text-[#75668f] hover:text-[#4d3475]'
+                  ? 'bg-white text-[#6c6ce5] shadow-xs'
+                  : 'text-[#7c7f9d] hover:text-[#262542]'
               }`}
             >
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
-              <span>Siswa</span>
+              <span>Masuk Siswa</span>
             </button>
             <button
               type="button"
@@ -145,12 +133,12 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               }}
               className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition ${
                 role === 'teacher'
-                  ? 'bg-white text-[#4d3475] shadow-2xs'
-                  : 'text-[#75668f] hover:text-[#4d3475]'
+                  ? 'bg-white text-[#6c6ce5] shadow-xs'
+                  : 'text-[#7c7f9d] hover:text-[#262542]'
               }`}
             >
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              <span>Guru</span>
+              <span>Admin Guru</span>
             </button>
           </div>
 
@@ -158,9 +146,9 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
             <form onSubmit={handleStudentSubmit} className="space-y-4">
               {/* Pilih Kelas: XI-1 atau XI-2 */}
               <div>
-                <span className="block text-sm font-semibold text-[#2c243b]">Kelas</span>
-                <span className="mb-2 block text-xs text-[#6f6680]">
-                  Soal latihan &amp; ujian akan menyesuaikan kelas yang dipilih.
+                <span className="block text-sm font-bold text-[#262542]">Pilih Kelas</span>
+                <span className="mb-2 block text-xs text-[#8a8da8]">
+                  Paket soal kelas XI-1 dan XI-2 berbeda, pilih sesuai kelasmu.
                 </span>
                 <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Pilih Kelas">
                   {AVAILABLE_CLASSES.map((cls) => {
@@ -172,10 +160,10 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                         role="radio"
                         aria-checked={selected}
                         onClick={() => setClassName(cls)}
-                        className={`flex h-12 flex-col items-center justify-center rounded-xl border text-sm font-bold transition ${
+                        className={`flex h-13 flex-col items-center justify-center rounded-2xl border text-sm font-bold transition ${
                           selected
-                            ? 'border-[#7a5ca8] bg-[#f3ecfb] text-[#4d3475]'
-                            : 'border-[#e6def2] bg-white text-[#6f6680] hover:border-[#cbbbe6] hover:bg-[#faf8fc]'
+                            ? 'border-[#6c6ce5] bg-[#f3f2ff] text-[#6c6ce5]'
+                            : 'border-[#eceef8] bg-[#fafbff] text-[#7c7f9d] hover:border-[#cfd0f7]'
                         }`}
                       >
                         <span>Kelas {cls}</span>
@@ -192,11 +180,11 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                 <div className="sm:col-span-1">
                   <label
                     htmlFor="student-absen"
-                    className="block text-sm font-semibold text-[#2c243b]"
+                    className="block text-sm font-bold text-[#262542]"
                   >
                     No. Absen
                   </label>
-                  <span id="absen-hint" className="mb-1 block text-xs text-[#6f6680]">
+                  <span id="absen-hint" className="mb-1 block text-xs text-[#8a8da8]">
                     Angka 1–45
                   </span>
                   <input
@@ -212,7 +200,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                     value={absen}
                     onChange={(e) => setAbsen(e.target.value)}
                     placeholder="12"
-                    className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
+                    className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm text-[#262542] outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                   />
                   <div className="field-error-msg">
                     <span role="img" aria-label="Error">!</span> Isi 1–45.
@@ -222,11 +210,11 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="student-name"
-                    className="block text-sm font-semibold text-[#2c243b]"
+                    className="block text-sm font-bold text-[#262542]"
                   >
                     Nama Lengkap
                   </label>
-                  <span id="name-hint" className="mb-1 block text-xs text-[#6f6680]">
+                  <span id="name-hint" className="mb-1 block text-xs text-[#8a8da8]">
                     Sesuai absen kelas {className}.
                   </span>
                   <input
@@ -241,7 +229,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Nama lengkap kamu"
-                    className="form-control h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
+                    className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm text-[#262542] outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                   />
                   <div className="field-error-msg">
                     <span role="img" aria-label="Error">!</span> Minimal 3 karakter.
@@ -252,16 +240,15 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               <div>
                 <label
                   htmlFor="access-code"
-                  className="block text-sm font-semibold text-[#2c243b]"
+                  className="block text-sm font-bold text-[#262542]"
                 >
                   Kode Remedial
                 </label>
-                <span id="code-hint" className="mb-1 block text-xs text-[#6f6680]">
-                  Masukkan kode dari guru (demo:{' '}
-                  <code className="font-mono-math font-semibold text-[#6d4c9e]">
+                <span id="code-hint" className="mb-1 block text-xs text-[#8a8da8]">
+                  Demo kode:{' '}
+                  <code className="font-mono-math font-semibold text-[#6c6ce5]">
                     {settings.accessCode}
                   </code>
-                  ).
                 </span>
                 <input
                   id="access-code"
@@ -273,7 +260,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value)}
                   placeholder={settings.accessCode}
-                  className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm uppercase text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
+                  className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm uppercase text-[#262542] outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
                 <div className="field-error-msg">
                   <span role="img" aria-label="Error">!</span> Kode remedial wajib diisi.
@@ -283,7 +270,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               {formError && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-[#f2ccd5] bg-[#fdf0f3] px-3.5 py-2.5 text-xs font-medium text-[#a33b56]"
+                  className="rounded-xl border border-[#ffd0d6] bg-[#fff3f5] px-3.5 py-2.5 text-xs font-medium text-[#d94657]"
                 >
                   {formError}
                 </div>
@@ -291,9 +278,9 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
 
               <button
                 type="submit"
-                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#6d4c9e] px-4 text-sm font-semibold text-white transition hover:bg-[#5b3d8a]"
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#6c6ce5] px-4 text-sm font-semibold text-white shadow-sm shadow-[#6c6ce5]/30 transition hover:bg-[#5a5ad6]"
               >
-                Masuk Sekarang
+                Masuk ke Beranda
               </button>
             </form>
           ) : (
@@ -301,13 +288,13 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               <div>
                 <label
                   htmlFor="teacher-pin"
-                  className="block text-sm font-semibold text-[#2c243b]"
+                  className="block text-sm font-bold text-[#262542]"
                 >
                   PIN Guru
                 </label>
-                <span id="pin-hint" className="mb-1 block text-xs text-[#6f6680]">
+                <span id="pin-hint" className="mb-1 block text-xs text-[#8a8da8]">
                   Demo PIN default:{' '}
-                  <code className="font-mono-math font-semibold text-[#6d4c9e]">
+                  <code className="font-mono-math font-semibold text-[#6c6ce5]">
                     {settings.teacherPin}
                   </code>
                 </span>
@@ -321,7 +308,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                   value={teacherPin}
                   onChange={(e) => setTeacherPin(e.target.value)}
                   placeholder="Masukkan PIN Guru"
-                  className="form-control h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
+                  className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm text-[#262542] outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
                 <div className="field-error-msg">
                   <span role="img" aria-label="Error">!</span> PIN Guru wajib diisi.
@@ -331,7 +318,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               {formError && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-[#f2ccd5] bg-[#fdf0f3] px-3.5 py-2.5 text-xs font-medium text-[#a33b56]"
+                  className="rounded-xl border border-[#ffd0d6] bg-[#fff3f5] px-3.5 py-2.5 text-xs font-medium text-[#d94657]"
                 >
                   {formError}
                 </div>
@@ -339,7 +326,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
 
               <button
                 type="submit"
-                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#3d2c59] px-4 text-sm font-semibold text-white transition hover:bg-[#2c1f42]"
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#262542] px-4 text-sm font-semibold text-white transition hover:bg-[#1a1930]"
               >
                 Buka Dashboard Guru
               </button>

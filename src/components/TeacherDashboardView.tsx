@@ -1,13 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  BarChart3,
-  CheckCircle2,
-  Download,
-  Save,
-  Search,
-  Settings,
-  Users,
-} from 'lucide-react';
+import { CheckCircle2, Download, Save, Search } from 'lucide-react';
 import { COMPETENCIES } from '../lib/generator/types';
 import {
   AVAILABLE_CLASSES,
@@ -21,6 +13,9 @@ import {
 interface TeacherDashboardViewProps {
   settings: RemedialSettings;
   attempts: AttemptRecord[];
+  activeTab: 'monitoring' | 'analytics' | 'settings';
+  externalSearch?: string;
+  onTabChange: (tab: 'monitoring' | 'analytics' | 'settings') => void;
   onSaveSettings: (next: RemedialSettings) => void;
 }
 
@@ -29,13 +24,16 @@ type ClassFilter = 'ALL' | ClassName;
 export function TeacherDashboardView({
   settings,
   attempts,
+  activeTab,
+  externalSearch = '',
   onSaveSettings,
 }: TeacherDashboardViewProps) {
-  const [tab, setTab] = useState<'monitoring' | 'analytics' | 'settings'>('monitoring');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearch, setLocalSearch] = useState('');
   const [classFilter, setClassFilter] = useState<ClassFilter>('ALL');
   const [draft, setDraft] = useState<RemedialSettings>(settings);
   const [savedNotice, setSavedNotice] = useState(false);
+
+  const effectiveSearch = (externalSearch || localSearch).trim().toLowerCase();
 
   const summaryRows = useMemo(
     () => summarizeStudents(attempts, settings.kkm),
@@ -55,17 +53,16 @@ export function TeacherDashboardView({
   }, [summaryRows]);
 
   const filteredRows = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
     return summaryRows.filter((r) => {
       const matchClass = classFilter === 'ALL' || r.className === classFilter;
       const matchQuery =
-        !q ||
-        r.name.toLowerCase().includes(q) ||
-        r.absen.toLowerCase().includes(q) ||
-        r.className.toLowerCase().includes(q);
+        !effectiveSearch ||
+        r.name.toLowerCase().includes(effectiveSearch) ||
+        r.absen.toLowerCase().includes(effectiveSearch) ||
+        r.className.toLowerCase().includes(effectiveSearch);
       return matchClass && matchQuery;
     });
-  }, [summaryRows, searchQuery, classFilter]);
+  }, [summaryRows, effectiveSearch, classFilter]);
 
   const stats = useMemo(() => {
     const scopeRows =
@@ -148,27 +145,27 @@ export function TeacherDashboardView({
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:py-8">
-      {/* Header & Ekspor */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto max-w-6xl space-y-6">
+      {/* Banner Guru Periwinkle */}
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-[#7372F3] via-[#7E7AF6] to-[#6866E6] px-6 py-5 text-white shadow-md shadow-[#6c6ce5]/15">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
-            Dashboard Guru Matematika (Admin)
+          <p className="text-xs font-semibold text-white/80">
+            Dashboard Guru · SMA Don Bosco II
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-violet-950">{settings.title}</h2>
+          <h1 className="mt-0.5 text-xl font-extrabold sm:text-2xl">{settings.title}</h1>
         </div>
 
         <button
           type="button"
           onClick={handleExportCsv}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-emerald-700"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/35 bg-white/15 px-4 text-xs font-semibold text-white transition hover:bg-white/25"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
           <span>
             Unduh Rekap {classFilter === 'ALL' ? 'Semua' : classFilter} (.CSV)
           </span>
         </button>
-      </div>
+      </section>
 
       {/* Pemisah Kelas XI-1 & XI-2 */}
       <div className="grid gap-3 sm:grid-cols-3">
@@ -177,13 +174,13 @@ export function TeacherDashboardView({
           onClick={() => setClassFilter('ALL')}
           className={`rounded-2xl border p-4 text-left transition ${
             classFilter === 'ALL'
-              ? 'border-[#7a5ca8] bg-[#f4effa]'
-              : 'border-[#ebe4f4] bg-white hover:border-[#cbbbe6]'
+              ? 'border-[#6c6ce5] bg-[#f3f2ff]'
+              : 'border-[#eceef8] bg-white hover:border-[#cfd0f7]'
           }`}
         >
-          <div className="text-xs font-semibold text-[#6d4c9e]">Gabungan</div>
-          <div className="mt-0.5 text-lg font-extrabold text-[#2c243b]">Semua Kelas</div>
-          <div className="mt-1 text-xs text-[#5c536d]">
+          <div className="text-xs font-semibold text-[#6c6ce5]">Gabungan</div>
+          <div className="mt-0.5 text-lg font-extrabold text-[#262542]">Semua Kelas</div>
+          <div className="mt-1 text-xs text-[#7c7f9d]">
             Total {classCounts.all} peserta remedial
           </div>
         </button>
@@ -195,11 +192,11 @@ export function TeacherDashboardView({
           const accent =
             cls === 'XI-1'
               ? active
-                ? 'border-[#c47c96] bg-[#fdf2f6]'
-                : 'border-[#ebe4f4] bg-white hover:border-[#e2bdd0]'
+                ? 'border-[#e88ea8] bg-[#fff2f6]'
+                : 'border-[#eceef8] bg-white hover:border-[#f2c6d4]'
               : active
-                ? 'border-[#5a9a80] bg-[#eef8f3]'
-                : 'border-[#ebe4f4] bg-white hover:border-[#bfe0d0]';
+                ? 'border-[#5ac799] bg-[#eefbf5]'
+                : 'border-[#eceef8] bg-white hover:border-[#bcead5]';
           return (
             <button
               key={cls}
@@ -207,11 +204,11 @@ export function TeacherDashboardView({
               onClick={() => setClassFilter(cls)}
               className={`rounded-2xl border p-4 text-left transition ${accent}`}
             >
-              <div className="text-xs font-semibold text-[#6d4c9e]">
+              <div className="text-xs font-semibold text-[#6c6ce5]">
                 {cls === 'XI-1' ? 'Paket A' : 'Paket B'}
               </div>
-              <div className="mt-0.5 text-lg font-extrabold text-[#2c243b]">Kelas {cls}</div>
-              <div className="mt-1 text-xs text-[#5c536d]">
+              <div className="mt-0.5 text-lg font-extrabold text-[#262542]">Kelas {cls}</div>
+              <div className="mt-1 text-xs text-[#7c7f9d]">
                 {total} siswa · {passed} tuntas (KKM {settings.kkm})
               </div>
             </button>
@@ -222,31 +219,31 @@ export function TeacherDashboardView({
       {/* KPI Ringkasan */}
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="soft-card rounded-2xl p-4">
-          <dt className="text-xs font-medium text-[#6f6680]">
+          <dt className="text-xs font-medium text-[#8a8da8]">
             Peserta ({classFilter === 'ALL' ? 'XI-1 & XI-2' : classFilter})
           </dt>
-          <dd className="mt-1 text-2xl font-extrabold text-[#2c243b]">
+          <dd className="mt-1 text-2xl font-extrabold text-[#262542]">
             {stats.totalStudents} siswa
           </dd>
         </div>
         <div className="soft-card rounded-2xl p-4">
-          <dt className="text-xs font-medium text-[#266b4d]">
+          <dt className="text-xs font-medium text-[#28a870]">
             Ketuntasan (KKM {settings.kkm})
           </dt>
-          <dd className="mt-1 text-2xl font-extrabold text-[#266b4d]">
+          <dd className="mt-1 text-2xl font-extrabold text-[#28a870]">
             {stats.passRate}%{' '}
-            <span className="text-sm font-medium text-[#6f6680]">
+            <span className="text-sm font-medium text-[#8a8da8]">
               ({stats.passedStudents}/{stats.totalStudents})
             </span>
           </dd>
         </div>
         <div className="soft-card rounded-2xl p-4">
-          <dt className="text-xs font-medium text-[#6f6680]">Rata-rata Nilai Tertinggi</dt>
-          <dd className="mt-1 text-2xl font-extrabold text-[#2c243b]">{stats.avgScore}</dd>
+          <dt className="text-xs font-medium text-[#8a8da8]">Rata-rata Nilai Tertinggi</dt>
+          <dd className="mt-1 text-2xl font-extrabold text-[#262542]">{stats.avgScore}</dd>
         </div>
         <div className="soft-card rounded-2xl p-4">
-          <dt className="text-xs font-medium text-[#a33b56]">Topik Paling Sulit</dt>
-          <dd className="mt-1 text-sm font-bold text-[#a33b56]">
+          <dt className="text-xs font-medium text-[#d94657]">Topik Paling Sulit</dt>
+          <dd className="mt-1 text-sm font-bold text-[#d94657]">
             {hardestTopic
               ? `No. ${hardestTopic.id}: ${hardestTopic.shortTitle} (${hardestTopic.masteryPct}%)`
               : 'Belum ada data'}
@@ -254,66 +251,28 @@ export function TeacherDashboardView({
         </div>
       </dl>
 
-      {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-[#ebe4f4] pb-3">
-        <button
-          type="button"
-          onClick={() => setTab('monitoring')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-            tab === 'monitoring'
-              ? 'bg-[#6d4c9e] text-white'
-              : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
-          }`}
-        >
-          <Users className="h-4 w-4" aria-hidden="true" />
-          <span>Monitoring Siswa</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('analytics')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-            tab === 'analytics'
-              ? 'bg-[#6d4c9e] text-white'
-              : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" aria-hidden="true" />
-          <span>Analitik Butir Soal</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('settings')}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-            tab === 'settings'
-              ? 'bg-[#6d4c9e] text-white'
-              : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
-          }`}
-        >
-          <Settings className="h-4 w-4" aria-hidden="true" />
-          <span>Pengaturan Remedial</span>
-        </button>
-      </div>
-
       {/* TAB 1: MONITORING SISWA */}
-      {tab === 'monitoring' && (
-        <section className="space-y-4 rounded-3xl border border-violet-200/80 bg-white/90 p-5 shadow-2xs">
+      {activeTab === 'monitoring' && (
+        <section className="soft-card space-y-4 rounded-3xl p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative min-w-56 flex-1">
+            <div className="relative min-w-56 flex-1 sm:hidden">
               <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-400"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a9db8]"
                 aria-hidden="true"
               />
               <input
                 type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama atau No. Absen siswa..."
-                className="h-10 w-full rounded-xl border border-violet-200 bg-violet-50/30 pl-9 pr-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                placeholder="Cari nama atau No. Absen..."
+                className="h-10 w-full rounded-xl border border-[#eceef8] bg-[#fafbff] pl-9 pr-3 text-sm outline-none focus:border-[#6c6ce5]"
               />
             </div>
-            <span className="text-xs font-medium text-violet-700">
-              Menampilkan {filteredRows.length} siswa (
-              {classFilter === 'ALL' ? 'XI-1 & XI-2' : `Kelas ${classFilter}`})
+            <h2 className="text-sm font-bold text-[#262542]">
+              Daftar Monitoring Siswa ({filteredRows.length})
+            </h2>
+            <span className="text-xs font-medium text-[#8a8da8]">
+              Filter: {classFilter === 'ALL' ? 'Kelas XI-1 & XI-2' : `Kelas ${classFilter}`}
             </span>
           </div>
 
@@ -321,77 +280,77 @@ export function TeacherDashboardView({
             tabIndex={0}
             role="region"
             aria-labelledby="monitoring-table-caption"
-            className="table-wrapper rounded-2xl border border-violet-200/80"
+            className="table-wrapper rounded-2xl border border-[#eceef8]"
           >
             <table className="monitoring-table text-sm">
               <caption id="monitoring-table-caption" className="sr-only">
                 Daftar monitoring hasil ujian remedial siswa kelas XI-1 dan XI-2
               </caption>
-              <thead className="bg-violet-50/90 text-xs uppercase tracking-wide text-violet-700">
+              <thead className="bg-[#f6f7fd] text-xs uppercase tracking-wide text-[#7c7f9d]">
                 <tr>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Nama Siswa
                   </th>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     No. Absen
                   </th>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Kelas
                   </th>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Nilai Tertinggi
                   </th>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Percobaan
                   </th>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Waktu Selesai
                   </th>
-                  <th scope="col" className="border-b border-violet-200 px-4 py-3 text-left">
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Status KKM
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-violet-100/70">
+              <tbody className="divide-y divide-[#f3f4fb]">
                 {filteredRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={7} className="px-4 py-8 text-center text-[#8a8da8]">
                       Tidak ada data siswa yang cocok dengan filter.
                     </td>
                   </tr>
                 ) : (
                   filteredRows.map((row) => (
-                    <tr key={`${row.className}-${row.absen}`} className="hover:bg-violet-50/40">
-                      <th scope="row" className="px-4 py-3 font-semibold text-violet-950">
+                    <tr key={`${row.className}-${row.absen}`} className="hover:bg-[#fafbff]">
+                      <th scope="row" className="px-4 py-3 font-semibold text-[#262542]">
                         {row.name}
                       </th>
-                      <td className="font-mono-math px-4 py-3 font-semibold text-violet-700">
+                      <td className="font-mono-math px-4 py-3 font-semibold text-[#6c6ce5]">
                         {row.absen}
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             row.className === 'XI-1'
-                              ? 'bg-fuchsia-50 text-fuchsia-700 ring-1 ring-fuchsia-200'
-                              : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'
+                              ? 'bg-[#fff2f6] text-[#c75479]'
+                              : 'bg-[#eefbf5] text-[#28a870]'
                           }`}
                         >
                           {row.className}
                         </span>
                       </td>
-                      <td className="font-mono-math px-4 py-3 font-bold text-violet-950">
+                      <td className="font-mono-math px-4 py-3 font-bold text-[#262542]">
                         {row.bestScore}
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{row.attemptsCount}×</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-[#7c7f9d]">{row.attemptsCount}×</td>
+                      <td className="px-4 py-3 text-xs text-[#8a8da8]">
                         {new Date(row.lastSubmittedAt).toLocaleString('id-ID')}
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             row.passed
-                              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-                              : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'
+                              ? 'bg-[#e6f9f1] text-[#28a870]'
+                              : 'bg-[#ffeff1] text-[#d94657]'
                           }`}
                         >
                           {row.passed ? 'TUNTAS' : 'BELUM TUNTAS'}
@@ -407,16 +366,15 @@ export function TeacherDashboardView({
       )}
 
       {/* TAB 2: ANALITIK BUTIR SOAL */}
-      {tab === 'analytics' && (
-        <section className="space-y-4 rounded-3xl border border-violet-200/80 bg-white/90 p-5 shadow-2xs">
+      {activeTab === 'analytics' && (
+        <section className="soft-card space-y-4 rounded-3xl p-5">
           <div>
-            <h3 className="text-base font-bold text-[#2c243b]">
+            <h2 className="text-base font-bold text-[#262542]">
               Analisis Penguasaan 6 Kompetensi Matriks Kelas XI (
               {classFilter === 'ALL' ? 'XI-1 & XI-2' : `Kelas ${classFilter}`})
-            </h3>
-            <p className="text-xs text-slate-600">
-              Menampilkan rata-rata persentase skor per kompetensi untuk mengidentifikasi materi
-              yang paling perlu dibahas ulang.
+            </h2>
+            <p className="text-xs text-[#8a8da8]">
+              Rata-rata persentase skor per kompetensi untuk mengidentifikasi materi tersulit.
             </p>
           </div>
 
@@ -424,33 +382,33 @@ export function TeacherDashboardView({
             {itemAnalytics.map((item) => {
               const barColor =
                 item.masteryPct >= settings.kkm
-                  ? 'bg-emerald-400'
+                  ? 'bg-[#34c78a]'
                   : item.masteryPct >= 55
-                    ? 'bg-amber-400'
-                    : 'bg-rose-400';
+                    ? 'bg-[#ffb84d]'
+                    : 'bg-[#ff6b72]';
 
               return (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4"
+                  className="rounded-2xl border border-[#eceef8] bg-[#fafbff] p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className="text-xs font-bold text-violet-600">
-                        Kompetensi {item.id} • {item.reference}
+                      <span className="text-xs font-bold text-[#6c6ce5]">
+                        Kompetensi {item.id} · {item.reference}
                       </span>
-                      <h4 className="text-sm font-bold text-violet-950">{item.title}</h4>
+                      <h3 className="text-sm font-bold text-[#262542]">{item.title}</h3>
                     </div>
                     <div className="text-right">
-                      <div className="font-mono-math text-lg font-extrabold text-violet-950">
+                      <div className="font-mono-math text-lg font-extrabold text-[#262542]">
                         {item.masteryPct}%
                       </div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-[#8a8da8]">
                         Benar penuh: {item.fullPct}% ({item.attemptsCount} percobaan)
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-violet-100">
+                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-[#eceef8]">
                     <div
                       className={`h-full rounded-full transition-all ${barColor}`}
                       style={{ width: `${item.masteryPct}%` }}
@@ -464,11 +422,11 @@ export function TeacherDashboardView({
       )}
 
       {/* TAB 3: PENGATURAN REMEDIAL */}
-      {tab === 'settings' && (
-        <section className="rounded-3xl border border-violet-200/80 bg-white/90 p-6 shadow-2xs">
+      {activeTab === 'settings' && (
+        <section className="soft-card rounded-3xl p-6">
           <form onSubmit={handleSaveSettingsSubmit} className="max-w-xl space-y-4">
             <div>
-              <label htmlFor="set-title" className="block text-sm font-semibold text-violet-950">
+              <label htmlFor="set-title" className="block text-sm font-bold text-[#262542]">
                 Judul Sesi Remedial
               </label>
               <input
@@ -477,16 +435,16 @@ export function TeacherDashboardView({
                 required
                 value={draft.title}
                 onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                className="form-control mt-1 h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                className="form-control mt-1 h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="set-code" className="block text-sm font-semibold text-violet-950">
+                <label htmlFor="set-code" className="block text-sm font-bold text-[#262542]">
                   Kode Akses Remedial
                 </label>
-                <span className="mb-1 block text-xs text-slate-500">
+                <span className="mb-1 block text-xs text-[#8a8da8]">
                   Dibagikan ke siswa XI-1 &amp; XI-2.
                 </span>
                 <input
@@ -496,15 +454,15 @@ export function TeacherDashboardView({
                   minLength={4}
                   value={draft.accessCode}
                   onChange={(e) => setDraft({ ...draft, accessCode: e.target.value })}
-                  className="form-control font-mono-math h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm uppercase outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                  className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm uppercase outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
               </div>
 
               <div>
-                <label htmlFor="set-kkm" className="block text-sm font-semibold text-violet-950">
+                <label htmlFor="set-kkm" className="block text-sm font-bold text-[#262542]">
                   Nilai KKM (1–100)
                 </label>
-                <span className="mb-1 block text-xs text-slate-500">Default saat ini: 78</span>
+                <span className="mb-1 block text-xs text-[#8a8da8]">Default saat ini: 78</span>
                 <input
                   id="set-kkm"
                   type="number"
@@ -513,18 +471,18 @@ export function TeacherDashboardView({
                   required
                   value={draft.kkm}
                   onChange={(e) => setDraft({ ...draft, kkm: Number(e.target.value) })}
-                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                  className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="set-duration"
-                  className="block text-sm font-semibold text-violet-950"
+                  className="block text-sm font-bold text-[#262542]"
                 >
                   Durasi Ujian (menit)
                 </label>
-                <span className="mb-1 block text-xs text-slate-500">Default saat ini: 90 menit</span>
+                <span className="mb-1 block text-xs text-[#8a8da8]">Default saat ini: 90 menit</span>
                 <input
                   id="set-duration"
                   type="number"
@@ -535,18 +493,18 @@ export function TeacherDashboardView({
                   onChange={(e) =>
                     setDraft({ ...draft, durationMinutes: Number(e.target.value) })
                   }
-                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                  className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="set-attempts"
-                  className="block text-sm font-semibold text-violet-950"
+                  className="block text-sm font-bold text-[#262542]"
                 >
                   Maksimal Percobaan Ujian
                 </label>
-                <span className="mb-1 block text-xs text-slate-500">Default: 3 percobaan</span>
+                <span className="mb-1 block text-xs text-[#8a8da8]">Default: 3 percobaan</span>
                 <input
                   id="set-attempts"
                   type="number"
@@ -557,20 +515,20 @@ export function TeacherDashboardView({
                   onChange={(e) =>
                     setDraft({ ...draft, maxAttempts: Number(e.target.value) })
                   }
-                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                  className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-violet-200 bg-violet-50/50 p-3.5">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#eceef8] bg-[#fafbff] p-3.5">
               <input
                 type="checkbox"
                 checked={draft.requirePractice}
                 onChange={(e) => setDraft({ ...draft, requirePractice: e.target.checked })}
-                className="mt-0.5 h-4 w-4 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
+                className="mt-0.5 h-4 w-4 rounded border-[#cfd0f7] text-[#6c6ce5] focus:ring-[#6c6ce5]"
               />
-              <span className="text-sm text-slate-700">
-                <strong className="block text-violet-950">
+              <span className="text-sm text-[#5c536d]">
+                <strong className="block text-[#262542]">
                   Wajibkan Mode Latihan sebelum Ujian Remedial
                 </strong>
                 Siswa harus memeriksa minimal 1 soal di Mode Latihan sebelum tombol Mulai Ujian
@@ -581,14 +539,14 @@ export function TeacherDashboardView({
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#6d4c9e] px-5 text-sm font-semibold text-white transition hover:bg-[#5b3d8a]"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#6c6ce5] px-5 text-sm font-semibold text-white shadow-sm shadow-[#6c6ce5]/25 transition hover:bg-[#5a5ad6]"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 <span>Simpan Pengaturan</span>
               </button>
 
               {savedNotice && (
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#28a870]">
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   Tersimpan!
                 </span>

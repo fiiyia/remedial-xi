@@ -1,4 +1,4 @@
-import { Award, BookOpenCheck, Clock, Lock, Play, RotateCcw } from 'lucide-react';
+import { Award, CheckCircle2, Clock, Lock, Play, RotateCcw } from 'lucide-react';
 import { COMPETENCIES, type CompetencyId } from '../lib/generator/types';
 import type {
   ActiveExamSession,
@@ -6,6 +6,7 @@ import type {
   RemedialSettings,
   StudentProfile,
 } from '../lib/storage/repository';
+import { HeroBooksLeft, HeroBooksRight, TopicThumbnail } from './TopicIllustration';
 
 interface StudentHomeViewProps {
   student: StudentProfile;
@@ -13,6 +14,7 @@ interface StudentHomeViewProps {
   attempts: AttemptRecord[];
   activeExam: ActiveExamSession | null;
   practiceDone: boolean;
+  searchQuery?: string;
   onStartPractice: (competencyId: CompetencyId) => void;
   onStartExam: () => void;
 }
@@ -23,6 +25,7 @@ export function StudentHomeView({
   attempts,
   activeExam,
   practiceDone,
+  searchQuery = '',
   onStartPractice,
   onStartExam,
 }: StudentHomeViewProps) {
@@ -33,179 +36,243 @@ export function StudentHomeView({
   const canTakeExam = Boolean(activeExam) || (remainingAttempts > 0 && !examBlockedByPractice);
   const paketLabel = student.className === 'XI-1' ? 'Paket A' : 'Paket B';
 
+  const scorePct = Math.min(100, Math.round((bestScore / settings.kkm) * 100));
+  const practicePct = practiceDone ? 100 : 25;
+
+  const q = searchQuery.trim().toLowerCase();
+  const visibleTopics = COMPETENCIES.filter(
+    (c) =>
+      !q ||
+      c.title.toLowerCase().includes(q) ||
+      c.shortTitle.toLowerCase().includes(q)
+  );
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:py-8">
-      {/* Banner Status Siswa */}
-      <section className="soft-card rounded-3xl p-5 sm:p-7">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold text-[#6d4c9e]">
-              Kelas {student.className} ({paketLabel}) · No. Absen {student.absen}
-            </p>
-            <h2 className="mt-1 text-2xl font-bold text-[#2c243b]">
-              Halo, {student.name}
-            </h2>
-            <p className="mt-0.5 text-sm text-[#5c536d]">{settings.title}</p>
-          </div>
+    <div className="mx-auto max-w-6xl space-y-6">
+      {/* Hero Banner Periwinkle-Lilac (mirip banner "Hi, Irham..." di referensi) */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#7372F3] via-[#7E7AF6] to-[#6866E6] px-6 py-7 text-white shadow-lg shadow-[#6c6ce5]/20 sm:px-8">
+        {/* Soft geometric background circles */}
+        <div className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -bottom-16 right-16 h-44 w-44 rounded-full bg-white/10" />
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-2xl border border-[#ebe4f4] bg-[#faf8fc] px-4 py-2.5 text-center">
-              <div className="text-xs text-[#6f6680]">Nilai Tertinggi</div>
-              <div className="text-xl font-extrabold text-[#2c243b]">
-                {attempts.length > 0 ? bestScore : '—'}
-              </div>
-            </div>
-            <div
-              className={`rounded-2xl px-4 py-2.5 text-center ${
-                hasPassed
-                  ? 'border border-[#c7e6d6] bg-[#ebf7f1] text-[#266b4d]'
-                  : 'border border-[#f2ccd5] bg-[#fdf0f3] text-[#a33b56]'
-              }`}
-            >
-              <div className="text-xs opacity-80">KKM {settings.kkm}</div>
-              <div className="mt-0.5 flex items-center gap-1 text-sm font-bold">
-                <Award className="h-4 w-4" aria-hidden="true" />
-                <span>{hasPassed ? 'TUNTAS' : 'BELUM TUNTAS'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="relative flex items-center justify-between gap-6">
+          <HeroBooksLeft />
 
-        {/* CTA Ujian Remedial */}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#e6dcf4] bg-[#f6f2fb] p-4 sm:p-5">
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-[#2c243b]">
-              {activeExam
-                ? 'Ujian Remedial Sedang Berlangsung'
-                : `Ujian Remedial Matriks — ${student.className} (${paketLabel})`}
-            </h3>
-            <p className="text-xs text-[#5c536d]">
-              6 soal acak khusus kelas {student.className} · Durasi {settings.durationMinutes} menit
-              · Sisa kesempatan: <strong>{remainingAttempts}</strong> dari {settings.maxAttempts}×
+          <div className="mx-auto max-w-md text-center">
+            <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+              Hai, {student.name}!
+            </h1>
+            <p className="mt-1.5 text-xs leading-relaxed text-white/85 sm:text-sm">
+              Selamat datang di Web Remedial Matriks Kelas {student.className} ({paketLabel}).
+              Latih materi di bawah atau langsung mulai ujian remedialmu.
             </p>
+
             {examBlockedByPractice && (
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-[#9a6b16]">
-                <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-                Coba minimal 1 soal di Mode Latihan dulu sebelum memulai ujian ya.
+              <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-amber-100">
+                <Lock className="h-3 w-3" aria-hidden="true" />
+                Coba minimal 1 soal latihan dulu ya
               </p>
             )}
-          </div>
 
-          <button
-            type="button"
-            disabled={!canTakeExam}
-            onClick={onStartExam}
-            className={`inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold transition ${
-              canTakeExam
-                ? 'bg-[#6d4c9e] text-white hover:bg-[#5b3d8a]'
-                : 'cursor-not-allowed bg-[#e5e0ec] text-[#8d849c]'
-            }`}
-          >
-            {activeExam ? (
-              <>
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                <span>Lanjutkan Ujian</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" aria-hidden="true" />
-                <span>Mulai Ujian</span>
-              </>
-            )}
-          </button>
-        </div>
-      </section>
-
-      {/* Daftar 6 Kompetensi untuk Mode Latihan */}
-      <section>
-        <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-lg font-bold text-[#2c243b]">
-              Latihan Mandiri per Topik ({paketLabel})
-            </h3>
-            <p className="text-xs text-[#5c536d]">
-              Belajar santai tanpa batas waktu, lengkap dengan petunjuk bertahap dan pembahasan.
-            </p>
-          </div>
-          {practiceDone && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#c7e6d6] bg-[#ebf7f1] px-3 py-1 text-xs font-semibold text-[#266b4d]">
-              <BookOpenCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              Sudah Berlatih
-            </span>
-          )}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {COMPETENCIES.map((comp) => (
-            <div
-              key={comp.id}
-              className="soft-card flex flex-col justify-between rounded-2xl p-4 transition hover:border-[#cbbbe6]"
-            >
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold text-[#6d4c9e]">
-                  <span>Bagian {comp.id}</span>
-                  <span className="rounded-full bg-[#f4effa] px-2.5 py-0.5 text-[#563f7a]">
-                    {comp.maxPoints} poin
-                  </span>
-                </div>
-                <h4 className="mt-2 text-sm font-bold text-[#2c243b]">{comp.title}</h4>
-                <p className="mt-1 text-xs text-[#6f6680]">
-                  Soal latihan khusus Kelas {student.className}
-                </p>
-              </div>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
               <button
                 type="button"
-                onClick={() => onStartPractice(comp.id)}
-                className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#e3d9f0] bg-[#faf8fc] text-xs font-semibold text-[#563f7a] transition hover:bg-[#f1eaf9]"
+                disabled={!canTakeExam}
+                onClick={onStartExam}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-5 py-2 text-xs font-semibold transition ${
+                  canTakeExam
+                    ? 'border-white/40 bg-white/15 text-white hover:bg-white/25'
+                    : 'cursor-not-allowed border-white/20 bg-white/10 text-white/50'
+                }`}
               >
-                Latihan Topik Ini
+                {activeExam ? (
+                  <>
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Lanjutkan Ujian</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Mulai Ujian ({settings.durationMinutes} mnt)</span>
+                  </>
+                )}
               </button>
             </div>
-          ))}
+          </div>
+
+          <HeroBooksRight />
         </div>
       </section>
 
-      {/* Riwayat Percobaan Ujian */}
-      {attempts.length > 0 && (
-        <section className="soft-card rounded-3xl p-5">
-          <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-[#2c243b]">
-            <Clock className="h-4 w-4 text-[#6d4c9e]" aria-hidden="true" />
-            <span>Riwayat Ujian Kamu</span>
-          </h3>
-          <div className="divide-y divide-[#f1eaf9]">
-            {attempts.map((att, idx) => (
-              <div
-                key={att.id}
-                className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+      {/* Main 2-Column Dashboard Grid (70% Topics / 30% Right Widgets) */}
+      <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+        {/* Left: Grid 6 Topik Latihan dengan Thumbnail Pastel */}
+        <section className="space-y-4 lg:col-span-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-[#262542]">
+                Topik Latihan Matriks ({paketLabel})
+              </h2>
+              <p className="text-xs text-[#8a8da8]">
+                Pilih salah satu topik untuk berlatih dengan hint bertahap &amp; pembahasan.
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-[#6c6ce5]">
+              {visibleTopics.length} topik
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {visibleTopics.map((comp) => (
+              <button
+                key={comp.id}
+                type="button"
+                onClick={() => onStartPractice(comp.id)}
+                className="soft-card group flex flex-col rounded-3xl p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div>
-                  <span className="font-semibold text-[#2c243b]">
-                    Percobaan #{attempts.length - idx}
-                  </span>
-                  <span className="ml-2 text-xs text-[#6f6680]">
-                    {new Date(att.submittedAt).toLocaleString('id-ID')} ·{' '}
-                    {Math.max(1, Math.round(att.durationSeconds / 60))} menit
-                  </span>
+                <TopicThumbnail id={comp.id} />
+                <div className="mt-3 px-1 pb-1">
+                  <h3 className="line-clamp-2 text-sm font-bold text-[#262542] group-hover:text-[#6c6ce5]">
+                    {comp.shortTitle}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[#8a8da8]">
+                    {comp.title}
+                  </p>
+                  <div className="mt-2.5 flex items-center justify-between text-[11px] font-semibold">
+                    <span className="text-[#6c6ce5]">Bobot {comp.maxPoints}</span>
+                    <span className="rounded-lg bg-[#f3f2ff] px-2 py-0.5 text-[#6c6ce5] transition group-hover:bg-[#6c6ce5] group-hover:text-white">
+                      Latih
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono-math font-bold text-[#2c243b]">
-                    {att.totalScore} / {att.maxScore}
-                  </span>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      att.passed
-                        ? 'bg-[#ebf7f1] text-[#266b4d]'
-                        : 'bg-[#fdf0f3] text-[#a33b56]'
-                    }`}
-                  >
-                    {att.passed ? 'TUNTAS' : 'BELUM TUNTAS'}
-                  </span>
-                </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
-      )}
+
+        {/* Right Rail: Target Ketuntasan + Riwayat Ujian (mirip "Unlocks achievement" & "Best sales") */}
+        <aside className="space-y-5 lg:col-span-4">
+          {/* Widget 1: Target Ketuntasan */}
+          <div className="soft-card rounded-3xl p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-[#262542]">Target Ketuntasan</h3>
+                <p className="text-[11px] text-[#8a8da8]">
+                  Capai nilai minimal KKM {settings.kkm}
+                </p>
+              </div>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                  hasPassed ? 'bg-[#e6f9f1] text-[#28a870]' : 'bg-[#f1f0ff] text-[#6c6ce5]'
+                }`}
+              >
+                <Award className="h-4 w-4" aria-hidden="true" />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {/* Bar 1: Skor Tertinggi */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#262542]">
+                    Skor Tertinggi: {attempts.length > 0 ? bestScore : 0}
+                  </span>
+                  <span className="text-[11px] font-medium text-[#8a8da8]">
+                    KKM {settings.kkm}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#eceef8]">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      hasPassed ? 'bg-[#34c78a]' : 'bg-[#6c6ce5]'
+                    }`}
+                    style={{ width: `${scorePct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Bar 2: Status Latihan */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#262542]">Latihan Mandiri</span>
+                  <span className="text-[11px] font-medium text-[#8a8da8]">
+                    {practiceDone ? 'Selesai' : 'Belum dicoba'}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#eceef8]">
+                  <div
+                    className="h-full rounded-full bg-[#9b8cf7] transition-all"
+                    style={{ width: `${practicePct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Widget 2: Riwayat Percobaan */}
+          <div className="soft-card rounded-3xl p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#262542]">Riwayat Ujian</h3>
+              <span className="text-[11px] font-semibold text-[#8a8da8]">
+                {attempts.length}/{settings.maxAttempts}×
+              </span>
+            </div>
+
+            {attempts.length === 0 ? (
+              <div className="rounded-2xl bg-[#f6f7fc] p-4 text-center">
+                <Clock className="mx-auto h-5 w-5 text-[#9a9db8]" aria-hidden="true" />
+                <p className="mt-1.5 text-xs font-medium text-[#7c7f9d]">
+                  Belum ada riwayat ujian. Yuk coba latihan dulu atau mulai ujian!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {attempts.slice(0, 4).map((att, idx) => (
+                  <div
+                    key={att.id}
+                    className="flex items-center justify-between gap-2 rounded-2xl bg-[#f8f9fe] px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-extrabold ${
+                          att.passed
+                            ? 'bg-[#e6f9f1] text-[#28a870]'
+                            : 'bg-[#ffeff1] text-[#e05263]'
+                        }`}
+                      >
+                        {att.passed ? (
+                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          `#${attempts.length - idx}`
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-[#262542]">
+                          Percobaan #{attempts.length - idx}
+                        </p>
+                        <p className="text-[10px] text-[#8a8da8]">
+                          {new Date(att.submittedAt).toLocaleDateString('id-ID')} ·{' '}
+                          {Math.max(1, Math.round(att.durationSeconds / 60))} mnt
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`font-mono-math rounded-xl px-2.5 py-1 text-xs font-bold ${
+                        att.passed
+                          ? 'bg-[#34c78a] text-white'
+                          : 'bg-[#6c6ce5] text-white'
+                      }`}
+                    >
+                      {att.totalScore}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
