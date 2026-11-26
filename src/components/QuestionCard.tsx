@@ -39,19 +39,19 @@ export function QuestionCard({
   };
 
   return (
-    <article className="rounded-3xl border border-violet-200/80 bg-white/95 p-5 shadow-sm shadow-violet-100/60 backdrop-blur sm:p-6">
+    <article className="soft-card rounded-3xl p-5 sm:p-6">
       {/* Header Soal */}
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-2 border-b border-violet-100 pb-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-2 border-b border-[#f1eaf9] pb-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-violet-100 px-3 py-0.5 text-xs font-semibold text-violet-800">
-              Soal {questionNumber} • Tipe {question.variant}
+            <span className="inline-flex items-center rounded-full bg-[#f4effa] px-3 py-0.5 text-xs font-semibold text-[#6d4c9e]">
+              Soal {questionNumber} · Paket {question.variant}
             </span>
-            <span className="text-xs font-medium text-violet-600/80">
+            <span className="text-xs font-medium text-[#6f6680]">
               Bobot {question.maxPoints} poin
             </span>
           </div>
-          <h3 className="mt-1.5 text-base font-bold text-violet-950 sm:text-lg">
+          <h3 className="mt-1.5 text-base font-bold text-[#2c243b] sm:text-lg">
             {question.title}
           </h3>
         </div>

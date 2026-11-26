@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, GraduationCap, KeyRound, ShieldCheck, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, GraduationCap, ShieldCheck, Target } from 'lucide-react';
 import {
   AVAILABLE_CLASSES,
   formatAbsen,
@@ -35,7 +35,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
 
     if (accessCode.trim().toUpperCase() !== settings.accessCode.trim().toUpperCase()) {
       setFormError(
-        `Kode remedial tidak cocok. Pastikan sesuai kode dari guru (demo: ${settings.accessCode}).`
+        `Kode remedial belum sesuai. Cek lagi kode dari guru ya (demo: ${settings.accessCode}).`
       );
       return;
     }
@@ -52,7 +52,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
     setFormError('');
 
     if (teacherPin.trim() !== settings.teacherPin) {
-      setFormError(`PIN Guru salah (demo: ${settings.teacherPin}).`);
+      setFormError(`PIN Guru belum sesuai (demo: ${settings.teacherPin}).`);
       return;
     }
 
@@ -60,54 +60,58 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:py-14">
-      <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
-        {/* Panel Informasi */}
-        <div className="space-y-5 lg:col-span-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-100/80 px-3.5 py-1.5 text-xs font-semibold text-violet-800 shadow-2xs">
-            <BookOpen className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-            <span>Matematika Tingkat Lanjut • Kelas XI-1 &amp; XI-2</span>
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:py-16">
+      <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+        {/* Bagian Kiri: Pengantar yang hangat & simpel */}
+        <div className="space-y-6 lg:col-span-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#f3ecfb] px-3.5 py-1 text-xs font-semibold text-[#6d4c9e]">
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Matematika Tingkat Lanjut · Kelas XI</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-violet-950 sm:text-4xl">
-            Web Remedial Matriks{' '}
-            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-transparent">
-              PH XI.2
-            </span>
-          </h1>
-          <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-            Platform latihan mandiri dan ujian remedial interaktif dengan generator angka acak
-            eksak, input matriks khusus (<span className="font-mono-math text-violet-700">2×2</span>{' '}
-            &amp; <span className="font-mono-math text-violet-700">3×3</span>), petunjuk bertahap,
-            serta penilaian otomatis instan.
-          </p>
 
-          <dl className="grid grid-cols-2 gap-3 pt-2">
-            <div className="rounded-2xl border border-violet-200/80 bg-white/85 p-4 shadow-2xs backdrop-blur-xs">
-              <dt className="text-xs font-medium text-violet-600">KKM Ketuntasan</dt>
-              <dd className="mt-1 text-2xl font-extrabold text-violet-950">{settings.kkm}</dd>
-            </div>
-            <div className="rounded-2xl border border-pink-200/80 bg-white/85 p-4 shadow-2xs backdrop-blur-xs">
-              <dt className="text-xs font-medium text-pink-600">Durasi Ujian</dt>
-              <dd className="mt-1 text-2xl font-extrabold text-violet-950">
-                {settings.durationMinutes} menit
-              </dd>
-            </div>
-            <div className="rounded-2xl border border-emerald-200/80 bg-white/85 p-4 shadow-2xs backdrop-blur-xs">
-              <dt className="text-xs font-medium text-emerald-700">Batas Percobaan</dt>
-              <dd className="mt-1 text-2xl font-extrabold text-violet-950">
-                {settings.maxAttempts}×
-              </dd>
-            </div>
-            <div className="rounded-2xl border border-amber-200/80 bg-white/85 p-4 shadow-2xs backdrop-blur-xs">
-              <dt className="text-xs font-medium text-amber-700">Kompetensi</dt>
-              <dd className="mt-1 text-2xl font-extrabold text-violet-950">6 Topik PH</dd>
-            </div>
-          </dl>
+          <div className="space-y-3">
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#2c243b] sm:text-4xl sm:leading-tight">
+              Web Remedial Matriks Kelas XI
+            </h1>
+            <p className="text-sm leading-relaxed text-[#5c536d] sm:text-base">
+              Halo! Kamu bisa berlatih dulu per topik sebelum mengerjakan ujian remedial.
+              Paket soal untuk <strong>Kelas XI-1</strong> dan <strong>Kelas XI-2</strong>{' '}
+              sudah dibedakan, jadi pastikan kamu memilih kelas yang benar ya.
+            </p>
+          </div>
+
+          {/* Info Ringkas Tanpa Kotak Ramai */}
+          <div className="flex flex-wrap gap-2.5 pt-1 text-xs font-semibold text-[#563f7a]">
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8dff4] bg-white px-3.5 py-2">
+              <Target className="h-3.5 w-3.5 text-[#6d4c9e]" aria-hidden="true" />
+              KKM {settings.kkm}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8dff4] bg-white px-3.5 py-2">
+              <Clock className="h-3.5 w-3.5 text-[#6d4c9e]" aria-hidden="true" />
+              Waktu {settings.durationMinutes} menit
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8dff4] bg-white px-3.5 py-2">
+              6 Soal · Maks. {settings.maxAttempts}× percobaan
+            </span>
+          </div>
+
+          <div className="rounded-2xl border border-[#ebe4f4] bg-[#f6f2fb]/70 p-4 text-xs leading-relaxed text-[#5c536d]">
+            <p className="font-semibold text-[#473366]">Catatan singkat:</p>
+            <p className="mt-1">
+              • <strong>Kelas XI-1</strong> mengerjakan Paket A (kesamaan matriks,{' '}
+              <span className="font-mono-math">2A − Bᵀ</span>, persamaan{' '}
+              <span className="font-mono-math">A·M = B</span>, invers{' '}
+              <span className="font-mono-math">3×3</span>, soal Koperasi &amp; Toko Kue).
+              <br />• <strong>Kelas XI-2</strong> mengerjakan Paket B (penjumlahan matriks,{' '}
+              <span className="font-mono-math">A⁻¹ × B</span>, sifat determinan, invers{' '}
+              <span className="font-mono-math">3×3</span>, soal Tiket Pentas &amp; Toko Kue).
+            </p>
+          </div>
         </div>
 
-        {/* Kartu Login */}
-        <div className="rounded-3xl border border-violet-200/80 bg-white/90 p-6 shadow-lg shadow-violet-200/40 backdrop-blur sm:p-7 lg:col-span-6">
-          <div className="mb-6 grid grid-cols-2 rounded-2xl bg-violet-100/70 p-1.5">
+        {/* Bagian Kanan: Form Masuk */}
+        <div className="soft-card rounded-3xl p-6 sm:p-8 lg:col-span-6">
+          <div className="mb-6 grid grid-cols-2 rounded-2xl bg-[#f4effa] p-1">
             <button
               type="button"
               onClick={() => {
@@ -116,12 +120,12 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               }}
               className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition ${
                 role === 'student'
-                  ? 'bg-white text-violet-800 shadow-xs'
-                  : 'text-violet-700/70 hover:text-violet-900'
+                  ? 'bg-white text-[#4d3475] shadow-2xs'
+                  : 'text-[#75668f] hover:text-[#4d3475]'
               }`}
             >
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
-              <span>Masuk Siswa</span>
+              <span>Siswa</span>
             </button>
             <button
               type="button"
@@ -131,12 +135,12 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               }}
               className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition ${
                 role === 'teacher'
-                  ? 'bg-white text-violet-800 shadow-xs'
-                  : 'text-violet-700/70 hover:text-violet-900'
+                  ? 'bg-white text-[#4d3475] shadow-2xs'
+                  : 'text-[#75668f] hover:text-[#4d3475]'
               }`}
             >
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              <span>Admin Guru</span>
+              <span>Guru</span>
             </button>
           </div>
 
@@ -144,9 +148,9 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
             <form onSubmit={handleStudentSubmit} className="space-y-4">
               {/* Pilih Kelas: XI-1 atau XI-2 */}
               <div>
-                <span className="block text-sm font-semibold text-violet-950">Pilih Kelas</span>
-                <span className="mb-2 block text-xs text-slate-500">
-                  Pilih kelas asal kamu sebelum mengisi No. Absen.
+                <span className="block text-sm font-semibold text-[#2c243b]">Kelas</span>
+                <span className="mb-2 block text-xs text-[#6f6680]">
+                  Soal latihan &amp; ujian akan menyesuaikan kelas yang dipilih.
                 </span>
                 <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Pilih Kelas">
                   {AVAILABLE_CLASSES.map((cls) => {
@@ -158,17 +162,16 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                         role="radio"
                         aria-checked={selected}
                         onClick={() => setClassName(cls)}
-                        className={`flex h-12 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition ${
+                        className={`flex h-12 flex-col items-center justify-center rounded-xl border text-sm font-bold transition ${
                           selected
-                            ? 'border-violet-500 bg-violet-100/80 text-violet-900 ring-2 ring-violet-300/70'
-                            : 'border-violet-200 bg-white text-slate-600 hover:border-violet-300 hover:bg-violet-50/50'
+                            ? 'border-[#7a5ca8] bg-[#f3ecfb] text-[#4d3475]'
+                            : 'border-[#e6def2] bg-white text-[#6f6680] hover:border-[#cbbbe6] hover:bg-[#faf8fc]'
                         }`}
                       >
-                        <Sparkles
-                          className={`h-4 w-4 ${selected ? 'text-violet-600' : 'text-slate-400'}`}
-                          aria-hidden="true"
-                        />
                         <span>Kelas {cls}</span>
+                        <span className="text-[11px] font-medium opacity-75">
+                          {cls === 'XI-1' ? 'Paket A' : 'Paket B'}
+                        </span>
                       </button>
                     );
                   })}
@@ -179,11 +182,11 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                 <div className="sm:col-span-1">
                   <label
                     htmlFor="student-absen"
-                    className="block text-sm font-semibold text-violet-950"
+                    className="block text-sm font-semibold text-[#2c243b]"
                   >
                     No. Absen
                   </label>
-                  <span id="absen-hint" className="mb-1 block text-xs text-slate-500">
+                  <span id="absen-hint" className="mb-1 block text-xs text-[#6f6680]">
                     Angka 1–45
                   </span>
                   <input
@@ -198,23 +201,23 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                     aria-invalid="false"
                     value={absen}
                     onChange={(e) => setAbsen(e.target.value)}
-                    placeholder="Contoh: 12"
-                    className="form-control font-mono-math h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm text-slate-900 outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                    placeholder="12"
+                    className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
                   />
                   <div className="field-error-msg">
-                    <span role="img" aria-label="Error">⚠️</span> Isi angka 1–45.
+                    <span role="img" aria-label="Error">!</span> Isi 1–45.
                   </div>
                 </div>
 
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="student-name"
-                    className="block text-sm font-semibold text-violet-950"
+                    className="block text-sm font-semibold text-[#2c243b]"
                   >
                     Nama Lengkap
                   </label>
-                  <span id="name-hint" className="mb-1 block text-xs text-slate-500">
-                    Sesuai daftar hadir kelas {className}.
+                  <span id="name-hint" className="mb-1 block text-xs text-[#6f6680]">
+                    Sesuai absen kelas {className}.
                   </span>
                   <input
                     id="student-name"
@@ -227,11 +230,11 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                     aria-invalid="false"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Contoh: Nabila Zahra"
-                    className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm text-slate-900 outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                    placeholder="Nama lengkap kamu"
+                    className="form-control h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
                   />
                   <div className="field-error-msg">
-                    <span role="img" aria-label="Error">⚠️</span> Minimal 3 karakter.
+                    <span role="img" aria-label="Error">!</span> Minimal 3 karakter.
                   </div>
                 </div>
               </div>
@@ -239,15 +242,16 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               <div>
                 <label
                   htmlFor="access-code"
-                  className="block text-sm font-semibold text-violet-950"
+                  className="block text-sm font-semibold text-[#2c243b]"
                 >
                   Kode Remedial
                 </label>
-                <span id="code-hint" className="mb-1 block text-xs text-slate-500">
-                  Demo kode:{' '}
-                  <code className="font-mono-math font-semibold text-violet-700">
+                <span id="code-hint" className="mb-1 block text-xs text-[#6f6680]">
+                  Masukkan kode dari guru (demo:{' '}
+                  <code className="font-mono-math font-semibold text-[#6d4c9e]">
                     {settings.accessCode}
                   </code>
+                  ).
                 </span>
                 <input
                   id="access-code"
@@ -259,17 +263,17 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value)}
                   placeholder={settings.accessCode}
-                  className="form-control font-mono-math h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm uppercase text-slate-900 outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                  className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm uppercase text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
                 />
                 <div className="field-error-msg">
-                  <span role="img" aria-label="Error">⚠️</span> Kode remedial wajib diisi.
+                  <span role="img" aria-label="Error">!</span> Kode remedial wajib diisi.
                 </div>
               </div>
 
               {formError && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-800"
+                  className="rounded-xl border border-[#f2ccd5] bg-[#fdf0f3] px-3.5 py-2.5 text-xs font-medium text-[#a33b56]"
                 >
                   {formError}
                 </div>
@@ -277,10 +281,9 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
 
               <button
                 type="submit"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-300/60 transition hover:from-violet-700 hover:to-fuchsia-600"
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#6d4c9e] px-4 text-sm font-semibold text-white transition hover:bg-[#5b3d8a]"
               >
-                <KeyRound className="h-4 w-4" aria-hidden="true" />
-                <span>Masuk ke Beranda Remedial</span>
+                Masuk Sekarang
               </button>
             </form>
           ) : (
@@ -288,13 +291,13 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
               <div>
                 <label
                   htmlFor="teacher-pin"
-                  className="block text-sm font-semibold text-violet-950"
+                  className="block text-sm font-semibold text-[#2c243b]"
                 >
-                  PIN Admin Guru
+                  PIN Guru
                 </label>
-                <span id="pin-hint" className="mb-1 block text-xs text-slate-500">
+                <span id="pin-hint" className="mb-1 block text-xs text-[#6f6680]">
                   Demo PIN default:{' '}
-                  <code className="font-mono-math font-semibold text-violet-700">
+                  <code className="font-mono-math font-semibold text-[#6d4c9e]">
                     {settings.teacherPin}
                   </code>
                 </span>
@@ -308,17 +311,17 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                   value={teacherPin}
                   onChange={(e) => setTeacherPin(e.target.value)}
                   placeholder="Masukkan PIN Guru"
-                  className="form-control h-11 w-full rounded-xl border border-violet-200 bg-violet-50/30 px-3 text-sm text-slate-900 outline-none focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                  className="form-control h-11 w-full rounded-xl border border-[#e3d9f0] bg-[#fcfbfe] px-3 text-sm text-[#2c243b] outline-none focus:border-[#7a5ca8] focus:bg-white focus:ring-2 focus:ring-[#e8dff7]"
                 />
                 <div className="field-error-msg">
-                  <span role="img" aria-label="Error">⚠️</span> PIN Admin wajib diisi.
+                  <span role="img" aria-label="Error">!</span> PIN Guru wajib diisi.
                 </div>
               </div>
 
               {formError && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-800"
+                  className="rounded-xl border border-[#f2ccd5] bg-[#fdf0f3] px-3.5 py-2.5 text-xs font-medium text-[#a33b56]"
                 >
                   {formError}
                 </div>
@@ -326,10 +329,9 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
 
               <button
                 type="submit"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-900"
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#3d2c59] px-4 text-sm font-semibold text-white transition hover:bg-[#2c1f42]"
               >
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                <span>Buka Dashboard Guru</span>
+                Buka Dashboard Guru
               </button>
             </form>
           )}

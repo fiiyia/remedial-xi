@@ -3,20 +3,22 @@
 
 @layer base {
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #faf7ff;
-    background-image:
-      radial-gradient(at 12% 8%, rgba(221, 214, 254, 0.55) 0px, transparent 42%),
-      radial-gradient(at 88% 12%, rgba(252, 231, 243, 0.55) 0px, transparent 40%),
-      radial-gradient(at 80% 88%, rgba(209, 250, 229, 0.4) 0px, transparent 42%);
-    background-attachment: fixed;
-    color: #1e1b4b;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #faf8fc;
+    color: #2c243b;
   }
 
   code,
   .font-mono-math {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   }
+}
+
+/* Soft calm card elevation */
+.soft-card {
+  background-color: #ffffff;
+  border: 1px solid #ebe4f4;
+  box-shadow: 0 2px 12px rgba(91, 63, 140, 0.04);
 }
 
 /* ============================================================================
@@ -27,17 +29,17 @@
 }
 
 .form-control:user-invalid {
-  border-color: #e11d48;
-  background-color: #fff1f2;
+  border-color: #d45d79;
+  background-color: #fff6f8;
 }
 
 .form-control:user-valid {
-  border-color: #10b981;
+  border-color: #4f9d79;
 }
 
 .field-error-msg {
   display: none;
-  color: #be123c;
+  color: #b54865;
   font-size: 0.8125rem;
   margin-top: 0.35rem;
 }
@@ -49,7 +51,7 @@
 }
 
 /* ============================================================================
-   Matrix Input Grid Visual Brackets (Lilac Soft Theme)
+   Matrix Input Grid Visual Brackets (Soft Lilac Plum)
    ============================================================================ */
 .matrix-bracket-box {
   position: relative;
@@ -65,21 +67,21 @@
   top: 0.125rem;
   bottom: 0.125rem;
   width: 0.625rem;
-  border-color: #7c3aed;
+  border-color: #7a5ca8;
   border-style: solid;
   pointer-events: none;
 }
 
 .matrix-bracket-box::before {
   left: 0;
-  border-width: 2.5px 0 2.5px 2.5px;
-  border-radius: 8px 0 0 8px;
+  border-width: 2px 0 2px 2px;
+  border-radius: 7px 0 0 7px;
 }
 
 .matrix-bracket-box::after {
   right: 0;
-  border-width: 2.5px 2.5px 2.5px 0;
-  border-radius: 0 8px 8px 0;
+  border-width: 2px 2px 2px 0;
+  border-radius: 0 7px 7px 0;
 }
 
 /* Mencegah auto-zoom iOS saat mengetik angka di input HP */
@@ -139,7 +141,7 @@
 
   .monitoring-table tbody tr {
     margin-block-end: 0.875rem;
-    border: 1px solid #e9d5ff;
+    border: 1px solid #ebe4f4;
     border-radius: 0.875rem;
     overflow: hidden;
     background-color: #ffffff;
@@ -149,8 +151,8 @@
     position: sticky;
     inset-block-start: 0;
     z-index: 2;
-    background-color: #faf5ff;
-    border-bottom: 1px solid #ede9fe;
+    background-color: #f6f2fb;
+    border-bottom: 1px solid #ebe4f4;
     padding: 0.625rem 0.875rem;
   }
 
@@ -159,7 +161,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0.875rem;
-    border-bottom: 1px solid #f5f3ff;
+    border-bottom: 1px solid #f6f2fb;
   }
 
   .monitoring-table tbody td:last-child {
@@ -168,7 +170,7 @@
 
   .monitoring-table tbody td::before {
     font-weight: 600;
-    color: #7c3aed;
+    color: #6d4c9e;
     font-size: 0.75rem;
   }
 

@@ -177,13 +177,13 @@ export function TeacherDashboardView({
           onClick={() => setClassFilter('ALL')}
           className={`rounded-2xl border p-4 text-left transition ${
             classFilter === 'ALL'
-              ? 'border-violet-500 bg-violet-100/80 ring-2 ring-violet-300/70'
-              : 'border-violet-200/80 bg-white/85 hover:border-violet-300'
+              ? 'border-[#7a5ca8] bg-[#f4effa]'
+              : 'border-[#ebe4f4] bg-white hover:border-[#cbbbe6]'
           }`}
         >
-          <div className="text-xs font-semibold text-violet-700">Gabungan</div>
-          <div className="mt-0.5 text-lg font-extrabold text-violet-950">Semua Kelas</div>
-          <div className="mt-1 text-xs text-slate-600">
+          <div className="text-xs font-semibold text-[#6d4c9e]">Gabungan</div>
+          <div className="mt-0.5 text-lg font-extrabold text-[#2c243b]">Semua Kelas</div>
+          <div className="mt-1 text-xs text-[#5c536d]">
             Total {classCounts.all} peserta remedial
           </div>
         </button>
@@ -195,11 +195,11 @@ export function TeacherDashboardView({
           const accent =
             cls === 'XI-1'
               ? active
-                ? 'border-fuchsia-500 bg-fuchsia-100/70 ring-2 ring-fuchsia-300/70'
-                : 'border-fuchsia-200/80 bg-white/85 hover:border-fuchsia-300'
+                ? 'border-[#c47c96] bg-[#fdf2f6]'
+                : 'border-[#ebe4f4] bg-white hover:border-[#e2bdd0]'
               : active
-                ? 'border-sky-500 bg-sky-100/70 ring-2 ring-sky-300/70'
-                : 'border-sky-200/80 bg-white/85 hover:border-sky-300';
+                ? 'border-[#5a9a80] bg-[#eef8f3]'
+                : 'border-[#ebe4f4] bg-white hover:border-[#bfe0d0]';
           return (
             <button
               key={cls}
@@ -207,10 +207,12 @@ export function TeacherDashboardView({
               onClick={() => setClassFilter(cls)}
               className={`rounded-2xl border p-4 text-left transition ${accent}`}
             >
-              <div className="text-xs font-semibold text-violet-700">Filter Khusus</div>
-              <div className="mt-0.5 text-lg font-extrabold text-violet-950">Kelas {cls}</div>
-              <div className="mt-1 text-xs text-slate-600">
-                {total} siswa • {passed} tuntas (KKM {settings.kkm})
+              <div className="text-xs font-semibold text-[#6d4c9e]">
+                {cls === 'XI-1' ? 'Paket A' : 'Paket B'}
+              </div>
+              <div className="mt-0.5 text-lg font-extrabold text-[#2c243b]">Kelas {cls}</div>
+              <div className="mt-1 text-xs text-[#5c536d]">
+                {total} siswa · {passed} tuntas (KKM {settings.kkm})
               </div>
             </button>
           );
@@ -219,32 +221,32 @@ export function TeacherDashboardView({
 
       {/* KPI Ringkasan */}
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-violet-200/80 bg-white/90 p-4 shadow-2xs">
-          <dt className="text-xs font-medium text-violet-600">
+        <div className="soft-card rounded-2xl p-4">
+          <dt className="text-xs font-medium text-[#6f6680]">
             Peserta ({classFilter === 'ALL' ? 'XI-1 & XI-2' : classFilter})
           </dt>
-          <dd className="mt-1 text-2xl font-extrabold text-violet-950">
+          <dd className="mt-1 text-2xl font-extrabold text-[#2c243b]">
             {stats.totalStudents} siswa
           </dd>
         </div>
-        <div className="rounded-2xl border border-emerald-200/80 bg-white/90 p-4 shadow-2xs">
-          <dt className="text-xs font-medium text-emerald-700">
-            Tingkat Ketuntasan (KKM {settings.kkm})
+        <div className="soft-card rounded-2xl p-4">
+          <dt className="text-xs font-medium text-[#266b4d]">
+            Ketuntasan (KKM {settings.kkm})
           </dt>
-          <dd className="mt-1 text-2xl font-extrabold text-emerald-700">
+          <dd className="mt-1 text-2xl font-extrabold text-[#266b4d]">
             {stats.passRate}%{' '}
-            <span className="text-sm font-medium text-slate-500">
+            <span className="text-sm font-medium text-[#6f6680]">
               ({stats.passedStudents}/{stats.totalStudents})
             </span>
           </dd>
         </div>
-        <div className="rounded-2xl border border-pink-200/80 bg-white/90 p-4 shadow-2xs">
-          <dt className="text-xs font-medium text-pink-700">Rata-rata Nilai Tertinggi</dt>
-          <dd className="mt-1 text-2xl font-extrabold text-violet-950">{stats.avgScore}</dd>
+        <div className="soft-card rounded-2xl p-4">
+          <dt className="text-xs font-medium text-[#6f6680]">Rata-rata Nilai Tertinggi</dt>
+          <dd className="mt-1 text-2xl font-extrabold text-[#2c243b]">{stats.avgScore}</dd>
         </div>
-        <div className="rounded-2xl border border-amber-200/80 bg-white/90 p-4 shadow-2xs">
-          <dt className="text-xs font-medium text-amber-700">Topik Paling Sulit</dt>
-          <dd className="mt-1 text-sm font-bold text-rose-700">
+        <div className="soft-card rounded-2xl p-4">
+          <dt className="text-xs font-medium text-[#a33b56]">Topik Paling Sulit</dt>
+          <dd className="mt-1 text-sm font-bold text-[#a33b56]">
             {hardestTopic
               ? `No. ${hardestTopic.id}: ${hardestTopic.shortTitle} (${hardestTopic.masteryPct}%)`
               : 'Belum ada data'}
@@ -253,14 +255,14 @@ export function TeacherDashboardView({
       </dl>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-violet-200/80 pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-[#ebe4f4] pb-3">
         <button
           type="button"
           onClick={() => setTab('monitoring')}
           className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
             tab === 'monitoring'
-              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
-              : 'bg-white/90 text-violet-800 ring-1 ring-violet-200 hover:bg-violet-50'
+              ? 'bg-[#6d4c9e] text-white'
+              : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
           }`}
         >
           <Users className="h-4 w-4" aria-hidden="true" />
@@ -271,8 +273,8 @@ export function TeacherDashboardView({
           onClick={() => setTab('analytics')}
           className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
             tab === 'analytics'
-              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
-              : 'bg-white/90 text-violet-800 ring-1 ring-violet-200 hover:bg-violet-50'
+              ? 'bg-[#6d4c9e] text-white'
+              : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
           }`}
         >
           <BarChart3 className="h-4 w-4" aria-hidden="true" />
@@ -283,8 +285,8 @@ export function TeacherDashboardView({
           onClick={() => setTab('settings')}
           className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
             tab === 'settings'
-              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
-              : 'bg-white/90 text-violet-800 ring-1 ring-violet-200 hover:bg-violet-50'
+              ? 'bg-[#6d4c9e] text-white'
+              : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
           }`}
         >
           <Settings className="h-4 w-4" aria-hidden="true" />
@@ -408,8 +410,8 @@ export function TeacherDashboardView({
       {tab === 'analytics' && (
         <section className="space-y-4 rounded-3xl border border-violet-200/80 bg-white/90 p-5 shadow-2xs">
           <div>
-            <h3 className="text-base font-bold text-violet-950">
-              Analisis Penguasaan 6 Kompetensi PH XI.2 (
+            <h3 className="text-base font-bold text-[#2c243b]">
+              Analisis Penguasaan 6 Kompetensi Matriks Kelas XI (
               {classFilter === 'ALL' ? 'XI-1 & XI-2' : `Kelas ${classFilter}`})
             </h3>
             <p className="text-xs text-slate-600">
@@ -579,7 +581,7 @@ export function TeacherDashboardView({
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-semibold text-white shadow-xs transition hover:from-violet-700 hover:to-fuchsia-600"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#6d4c9e] px-5 text-sm font-semibold text-white transition hover:bg-[#5b3d8a]"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 <span>Simpan Pengaturan</span>

@@ -131,14 +131,21 @@ describe('Dynamic Question Generator — 1,000-iteration fuzz & invariant tests'
   });
 
   it('produces deterministic exam sets for the same seed and totals 100 points', () => {
-    const exam1 = generateExamQuestions(123456);
-    const exam2 = generateExamQuestions(123456);
+    const exam1 = generateExamQuestions(123456, 'XI-1');
+    const exam2 = generateExamQuestions(123456, 'XI-1');
+    const examXI2 = generateExamQuestions(123456, 'XI-2');
+
     expect(exam1.length).toBe(6);
     expect(exam1.reduce((s, q) => s + q.maxPoints, 0)).toBe(100);
     expect(exam1.map((q) => q.promptLatex)).toEqual(exam2.map((q) => q.promptLatex));
 
-    // Empty answers should score 0 and not pass KKM 75
-    const emptyResult = gradeExam(exam1, {} as ExamAnswersMap, 75);
+    // Kelas XI-1 selalu mendapat Tipe A dan Kelas XI-2 selalu mendapat Tipe B dengan soal berbeda
+    expect(exam1.every((q) => q.variant === 'A')).toBe(true);
+    expect(examXI2.every((q) => q.variant === 'B')).toBe(true);
+    expect(exam1.map((q) => q.promptText)).not.toEqual(examXI2.map((q) => q.promptText));
+
+    // Empty answers should score 0 and not pass KKM 78
+    const emptyResult = gradeExam(exam1, {} as ExamAnswersMap, 78);
     expect(emptyResult.totalScore).toBe(0);
     expect(emptyResult.passed).toBe(false);
     expect(eqFrac(frac(0), frac(0))).toBe(true);

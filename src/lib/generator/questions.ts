@@ -1000,13 +1000,23 @@ function generateCompetency6(rng: Rng, variant: QuestionVariant): GeneratedQuest
   };
 }
 
+export function getVariantForClass(className?: 'XI-1' | 'XI-2'): QuestionVariant | undefined {
+  if (className === 'XI-1') return 'A';
+  if (className === 'XI-2') return 'B';
+  return undefined;
+}
+
 export function generateQuestionByCompetency(
   competencyId: CompetencyId,
   seed: number,
-  forcedVariant?: QuestionVariant
+  forcedVariant?: QuestionVariant,
+  className?: 'XI-1' | 'XI-2'
 ): GeneratedQuestion {
-  const rng = createRng(seed + competencyId * 9973);
-  const variant: QuestionVariant = forcedVariant ?? (rng.next() < 0.5 ? 'A' : 'B');
+  // Pisahkan ruang seed antara XI-1 dan XI-2 agar angka acak juga selalu berbeda
+  const classOffset = className === 'XI-2' ? 7919 : className === 'XI-1' ? 104729 : 0;
+  const rng = createRng(seed + competencyId * 9973 + classOffset);
+  const variant: QuestionVariant =
+    forcedVariant ?? getVariantForClass(className) ?? (rng.next() < 0.5 ? 'A' : 'B');
 
   switch (competencyId) {
     case 1:
@@ -1024,7 +1034,10 @@ export function generateQuestionByCompetency(
   }
 }
 
-export function generateExamQuestions(seed: number): GeneratedQuestion[] {
+export function generateExamQuestions(
+  seed: number,
+  className?: 'XI-1' | 'XI-2'
+): GeneratedQuestion[] {
   const ids: CompetencyId[] = [1, 2, 3, 4, 5, 6];
-  return ids.map((id) => generateQuestionByCompetency(id, seed));
+  return ids.map((id) => generateQuestionByCompetency(id, seed, undefined, className));
 }

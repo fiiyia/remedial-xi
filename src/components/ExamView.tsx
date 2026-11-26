@@ -30,7 +30,10 @@ function isQuestionTouched(answers: ExamAnswersMap, q: GeneratedQuestion): boole
 }
 
 export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewProps) {
-  const questions = useMemo(() => generateExamQuestions(session.seed), [session.seed]);
+  const questions = useMemo(
+    () => generateExamQuestions(session.seed, session.student.className),
+    [session.seed, session.student.className]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -62,13 +65,13 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
   return (
     <div className="mx-auto max-w-4xl space-y-5 px-4 py-6">
       {/* Sticky Exam Bar */}
-      <div className="sticky top-14 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-200/80 bg-white/90 px-4 py-3 shadow-xs backdrop-blur">
+      <div className="soft-card sticky top-16 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3">
         <div>
-          <p className="text-xs font-semibold text-violet-700">
-            Ujian Remedial • {session.student.name} ({session.student.className} • Absen{' '}
+          <p className="text-xs font-semibold text-[#6d4c9e]">
+            Ujian Remedial · {session.student.name} ({session.student.className} · Absen{' '}
             {session.student.absen})
           </p>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#5c536d]">
             Terisi: <strong>{answeredCount}</strong> / {questions.length} soal
           </p>
         </div>
@@ -77,8 +80,8 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
           <div
             className={`font-mono-math inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold ${
               isUrgent
-                ? 'bg-rose-100 text-rose-800 ring-1 ring-rose-300'
-                : 'bg-violet-100/80 text-violet-900'
+                ? 'border border-[#f2ccd5] bg-[#fdf0f3] text-[#a33b56]'
+                : 'bg-[#f4effa] text-[#4d3475]'
             }`}
             aria-live="off"
           >
@@ -89,7 +92,7 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:from-violet-700 hover:to-fuchsia-600"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#6d4c9e] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#5b3d8a]"
           >
             <Send className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Kumpulkan</span>
@@ -109,10 +112,10 @@ export function ExamView({ session, onUpdateAnswers, onSubmitExam }: ExamViewPro
               onClick={() => setCurrentIndex(idx)}
               className={`h-10 min-w-10 rounded-xl px-3 text-sm font-bold transition ${
                 isCurrent
-                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
+                  ? 'bg-[#6d4c9e] text-white'
                   : touched
-                    ? 'border border-emerald-300 bg-emerald-50 text-emerald-800'
-                    : 'border border-violet-200 bg-white/90 text-violet-800 hover:border-violet-400'
+                    ? 'border border-[#c7e6d6] bg-[#ebf7f1] text-[#266b4d]'
+                    : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
               }`}
             >
               {idx + 1}

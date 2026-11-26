@@ -62,14 +62,14 @@ export interface StudentSummaryRow {
   passed: boolean;
 }
 
-const SETTINGS_KEY = 'remedial_matriks_settings_v2';
-const ATTEMPTS_KEY = 'remedial_matriks_attempts_v2';
-const ACTIVE_EXAM_KEY = 'remedial_matriks_active_exam_v2';
-const PRACTICE_DONE_KEY = 'remedial_matriks_practice_done_v2';
+const SETTINGS_KEY = 'remedial_matriks_settings_v3';
+const ATTEMPTS_KEY = 'remedial_matriks_attempts_v3';
+const ACTIVE_EXAM_KEY = 'remedial_matriks_active_exam_v3';
+const PRACTICE_DONE_KEY = 'remedial_matriks_practice_done_v3';
 
 export const DEFAULT_SETTINGS: RemedialSettings = {
   accessCode: 'MATRIKS-XI',
-  title: 'Remedial PH XI.2 — Matriks (Matematika Tingkat Lanjut)',
+  title: 'Remedial Matriks Kelas XI — Matematika Tingkat Lanjut',
   kkm: 78,
   durationMinutes: 90,
   maxAttempts: 3,

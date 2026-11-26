@@ -9,16 +9,19 @@ import {
   type QuestionGradeResult,
 } from '../lib/generator/types';
 import { generateSessionSeed } from '../lib/math/prng';
+import type { ClassName } from '../lib/storage/repository';
 import { QuestionCard } from './QuestionCard';
 
 interface PracticeViewProps {
   initialCompetencyId: CompetencyId;
+  className: ClassName;
   onCompletePractice: () => void;
   onBack: () => void;
 }
 
 export function PracticeView({
   initialCompetencyId,
+  className,
   onCompletePractice,
   onBack,
 }: PracticeViewProps) {
@@ -28,8 +31,8 @@ export function PracticeView({
   const [gradeResult, setGradeResult] = useState<QuestionGradeResult | undefined>(undefined);
 
   const question = useMemo(
-    () => generateQuestionByCompetency(competencyId, seed),
-    [competencyId, seed]
+    () => generateQuestionByCompetency(competencyId, seed, undefined, className),
+    [competencyId, seed, className]
   );
 
   const handleSelectCompetency = (id: CompetencyId) => {
@@ -57,20 +60,25 @@ export function PracticeView({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5c536d] hover:text-[#2c243b]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           <span>Kembali ke Beranda</span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleNewVariant}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-          <span>Acak Angka Baru</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-[#f4effa] px-3 py-1 text-xs font-semibold text-[#6d4c9e]">
+            Latihan Kelas {className}
+          </span>
+          <button
+            type="button"
+            onClick={handleNewVariant}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#e3d9f0] bg-white px-3 py-1.5 text-xs font-semibold text-[#563f7a] transition hover:bg-[#f6f2fb]"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Acak Angka Baru</span>
+          </button>
+        </div>
       </div>
 
       {/* Selector Topik */}
@@ -82,8 +90,8 @@ export function PracticeView({
             onClick={() => handleSelectCompetency(c.id)}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
               c.id === competencyId
-                ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-xs'
-                : 'border border-violet-200 bg-white/90 text-violet-800 hover:border-violet-400'
+                ? 'bg-[#6d4c9e] text-white'
+                : 'border border-[#e3d9f0] bg-white text-[#563f7a] hover:bg-[#f6f2fb]'
             }`}
           >
             {c.id}. {c.shortTitle}
@@ -108,7 +116,7 @@ export function PracticeView({
         <button
           type="button"
           onClick={handleCheck}
-          className="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-emerald-700"
+          className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#2e7d5b] px-5 text-sm font-semibold text-white transition hover:bg-[#246649]"
         >
           <CheckCircle className="h-4 w-4" aria-hidden="true" />
           <span>Periksa Jawaban &amp; Lihat Pembahasan</span>

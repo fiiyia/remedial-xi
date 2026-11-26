@@ -120,33 +120,35 @@ export function App() {
   const remainingAttempts = Math.max(0, settings.maxAttempts - studentAttempts.length);
 
   return (
-    <div className="min-h-screen text-violet-950">
+    <div className="min-h-screen text-[#2c243b]">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-20 border-b border-violet-200/80 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <header className="sticky top-0 z-20 border-b border-[#ebe4f4] bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-15 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f1eaf9] text-[#6d4c9e]">
               <Grid3x3 className="h-4 w-4" aria-hidden="true" />
             </div>
-            <div>
-              <span className="text-sm font-bold text-violet-950">Web Remedial Matriks</span>
-              <span className="ml-2 hidden rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700 sm:inline-block">
-                PH XI.2
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold tracking-tight text-[#2c243b]">
+                Web Remedial Matriks
+              </span>
+              <span className="hidden rounded-full bg-[#f4effa] px-2.5 py-0.5 text-[11px] font-semibold text-[#6d4c9e] sm:inline-block">
+                Kelas XI
               </span>
             </div>
           </div>
 
           {view.kind !== 'login' && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {student && (
-                <span className="hidden rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800 sm:inline">
-                  {student.name} • {student.className} (Absen {student.absen})
+                <span className="hidden rounded-full bg-[#f6f2fb] px-3 py-1 text-xs font-medium text-[#563f7a] sm:inline">
+                  {student.name} · {student.className} (Absen {student.absen})
                 </span>
               )}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#e5dcf2] bg-white px-3 py-1.5 text-xs font-semibold text-[#563f7a] transition hover:bg-[#f6f2fb]"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Keluar</span>
@@ -185,6 +187,7 @@ export function App() {
         {view.kind === 'practice' && student && (
           <PracticeView
             initialCompetencyId={view.competencyId}
+            className={student.className}
             onCompletePractice={() => markPracticeCompleted(student)}
             onBack={() => setView({ kind: 'student_home' })}
           />
