@@ -64,9 +64,19 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
       <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
         {/* Bagian Kiri: Pengantar yang hangat & simpel */}
         <div className="space-y-6 lg:col-span-6">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#f3ecfb] px-3.5 py-1 text-xs font-semibold text-[#6d4c9e]">
-            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Matematika Tingkat Lanjut · Kelas XI</span>
+          <div className="flex items-center gap-3.5">
+            <img
+              src="/logo-don-bosco.png"
+              alt="Logo SMA Don Bosco II"
+              className="h-14 w-14 shrink-0 object-contain"
+            />
+            <div>
+              <p className="text-sm font-bold text-[#2c243b]">SMA Don Bosco II</p>
+              <div className="mt-0.5 inline-flex items-center gap-1.5 text-xs font-medium text-[#6d4c9e]">
+                <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Matematika Tingkat Lanjut · Kelas XI</span>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3">

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Grid3x3, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { gradeExam } from './lib/generator/grading';
 import type {
   CompetencyId,
@@ -124,17 +124,22 @@ export function App() {
       {/* Top Navbar */}
       <header className="sticky top-0 z-20 border-b border-[#ebe4f4] bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-15 max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f1eaf9] text-[#6d4c9e]">
-              <Grid3x3 className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-tight text-[#2c243b]">
-                Web Remedial Matriks
-              </span>
-              <span className="hidden rounded-full bg-[#f4effa] px-2.5 py-0.5 text-[11px] font-semibold text-[#6d4c9e] sm:inline-block">
-                Kelas XI
-              </span>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo-don-bosco.png"
+              alt="Logo SMA Don Bosco II"
+              className="h-9 w-9 shrink-0 object-contain"
+            />
+            <div className="leading-tight">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold tracking-tight text-[#2c243b]">
+                  Web Remedial Matriks
+                </span>
+                <span className="hidden rounded-full bg-[#f4effa] px-2.5 py-0.5 text-[11px] font-semibold text-[#6d4c9e] sm:inline-block">
+                  Kelas XI
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-[#6f6680]">SMA Don Bosco II</p>
             </div>
           </div>
 
