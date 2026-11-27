@@ -23,7 +23,10 @@ values ('default')
 on conflict (id) do nothing;
 
 -- 2. Riwayat Ujian & Skor Siswa (Permanen)
-create table if not exists public.attempts (
+-- Jika sebelumnya pernah menjalankan versi skema lama (masih kosong), pastikan struktur kolom terbaru terpasang:
+drop table if exists public.attempts cascade;
+
+create table public.attempts (
   id text primary key,
   student_key text not null,
   absen text not null,
@@ -144,3 +147,6 @@ begin
     alter publication supabase_realtime add table public.attempts;
   end if;
 end $$;
+
+-- Refresh schema cache API Supabase agar tabel langsung terbaca
+notify pgrst, 'reload schema';
