@@ -14,6 +14,7 @@ import {
   AVAILABLE_CLASSES,
   exportSummaryToCsv,
   getViolationLabel,
+  isSupabaseConfigured,
   summarizeStudents,
   type AttemptRecord,
   type ClassName,
@@ -258,7 +259,8 @@ export function TeacherDashboardView({
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-[#7372F3] via-[#7E7AF6] to-[#6866E6] px-5 py-5 text-white shadow-md shadow-[#6c6ce5]/15 sm:px-6">
         <div>
           <p className="text-xs font-semibold text-white/80">
-            Dashboard Guru · SMA Don Bosco II
+            Dashboard Guru · SMA Don Bosco II ·{' '}
+            {isSupabaseConfigured ? 'Tersambung Supabase Cloud' : 'Penyimpanan Lokal (Belum isi .env Supabase)'}
           </p>
           <h1 className="mt-0.5 text-lg font-extrabold sm:text-2xl">{settings.title}</h1>
         </div>

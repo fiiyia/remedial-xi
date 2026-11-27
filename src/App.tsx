@@ -25,8 +25,14 @@ import {
 import { generateSessionSeed } from './lib/math/prng';
 import {
   clearActiveExam,
+  fetchActiveExamFromCloud,
+  fetchAttemptsFromCloud,
+  fetchLiveSessionsFromCloud,
+  fetchPracticeDoneFromCloud,
+  fetchSettingsFromCloud,
   getStudentExamAttempts,
   hasCompletedPractice,
+  isSupabaseConfigured,
   loadActiveExam,
   loadAttempts,
   loadLiveSessions,
@@ -77,21 +83,32 @@ export function App() {
     loadLiveSessions()
   );
   const [student, setStudent] = useState<StudentProfile | null>(null);
+  const [studentActiveExam, setStudentActiveExam] = useState<ActiveExamSession | null>(null);
+  const [studentPracticeDone, setStudentPracticeDone] = useState<boolean>(false);
   const [view, setView] = useState<AppView>({ kind: 'login' });
   const [globalSearch, setGlobalSearch] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const refreshLiveData = useCallback(() => {
-    setAttempts(loadAttempts());
-    setLiveSessions(loadLiveSessions());
+  // Hydrate pengaturan dari Supabase saat aplikasi dibuka
+  useEffect(() => {
+    void fetchSettingsFromCloud().then((cloudSettings) => setSettings(cloudSettings));
   }, []);
 
-  // Sinkronisasi real-time lintas tab untuk Dashboard Guru
+  const refreshLiveData = useCallback(() => {
+    void Promise.all([fetchAttemptsFromCloud(), fetchLiveSessionsFromCloud()]).then(
+      ([cloudAttempts, cloudLive]) => {
+        setAttempts(cloudAttempts);
+        setLiveSessions(cloudLive);
+      }
+    );
+  }, []);
+
+  // Sinkronisasi real-time lintas tab & Supabase Realtime untuk Dashboard Guru
   useEffect(() => {
     if (view.kind !== 'teacher') return;
     refreshLiveData();
     const unsubscribe = subscribeLiveUpdates(refreshLiveData);
-    const interval = setInterval(refreshLiveData, 3000);
+    const interval = setInterval(refreshLiveData, 5000);
     return () => {
       unsubscribe();
       clearInterval(interval);
@@ -101,6 +118,8 @@ export function App() {
   const handleStudentLogin = (profile: StudentProfile) => {
     setStudent(profile);
     setGlobalSearch('');
+    setStudentActiveExam(loadActiveExam(profile));
+    setStudentPracticeDone(hasCompletedPractice(profile));
     upsertLiveSession({
       student: profile,
       status: 'online',
@@ -108,7 +127,18 @@ export function App() {
       answeredNumbers: [],
       violationCount: 0,
     });
-    refreshLiveData();
+    // Hydrate progres siswa dari Supabase (jika login di perangkat baru)
+    void Promise.all([
+      fetchSettingsFromCloud(),
+      fetchAttemptsFromCloud(),
+      fetchActiveExamFromCloud(profile),
+      fetchPracticeDoneFromCloud(profile),
+    ]).then(([cloudSettings, cloudAttempts, cloudActive, cloudPractice]) => {
+      setSettings(cloudSettings);
+      setAttempts(cloudAttempts);
+      setStudentActiveExam(cloudActive);
+      setStudentPracticeDone(cloudPractice);
+    });
     setView({ kind: 'student_home' });
   };
 
@@ -129,7 +159,7 @@ export function App() {
   const handleStartExam = () => {
     if (!student) return;
     setMobileMenuOpen(false);
-    const existing = loadActiveExam(student);
+    const existing = studentActiveExam ?? loadActiveExam(student);
     if (existing) {
       upsertLiveSession({
         student,
@@ -150,6 +180,7 @@ export function App() {
       violations: [],
     };
     saveActiveExam(newSession);
+    setStudentActiveExam(newSession);
     upsertLiveSession({
       student,
       status: 'exam',
@@ -220,7 +251,8 @@ export function App() {
           violations: prev.session.violations,
           autoSubmittedByViolation,
         });
-        clearActiveExam();
+        clearActiveExam(prev.session.student);
+        setStudentActiveExam(null);
         upsertLiveSession({
           student: prev.session.student,
           status: 'finished',
@@ -276,10 +308,10 @@ export function App() {
   }
 
   const isTeacher = view.kind === 'teacher';
-  const studentAttempts = student ? getStudentExamAttempts(student) : [];
+  const studentAttempts = student ? getStudentExamAttempts(student, attempts) : [];
   const remainingAttempts = Math.max(0, settings.maxAttempts - studentAttempts.length);
-  const activeExam = student ? loadActiveExam(student) : null;
-  const practiceDone = student ? hasCompletedPractice(student) : false;
+  const activeExam = student ? studentActiveExam ?? loadActiveExam(student) : null;
+  const practiceDone = student ? studentPracticeDone || hasCompletedPractice(student) : false;
   const bestScore = studentAttempts.reduce((m, a) => Math.max(m, a.totalScore), 0);
   const hasPassed = bestScore >= settings.kkm;
   const canTakeExam =
@@ -532,9 +564,13 @@ export function App() {
                 </div>
               </>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6c6ce5] px-3 py-1 text-xs font-bold text-white">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white ${
+                  isSupabaseConfigured ? 'bg-[#28a870]' : 'bg-[#6c6ce5]'
+                }`}
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                Admin Guru
+                {isSupabaseConfigured ? 'Supabase Live' : 'Mode Lokal'}
               </span>
             )}
           </div>
@@ -568,7 +604,10 @@ export function App() {
                   currentQuestion: id,
                 });
               }}
-              onCompletePractice={() => markPracticeCompleted(student)}
+              onCompletePractice={() => {
+                markPracticeCompleted(student);
+                setStudentPracticeDone(true);
+              }}
               onBack={() => {
                 upsertLiveSession({
                   student,
