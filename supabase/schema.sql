@@ -54,6 +54,39 @@ create index if not exists idx_attempts_session on public.attempts(session_id);
 create index if not exists idx_attempts_student on public.attempts(student_id);
 create index if not exists idx_attempts_mode on public.attempts(mode);
 
+-- 4. Monitoring Live Aktivitas Siswa (Real-Time)
+create table if not exists public.live_sessions (
+  id uuid primary key default gen_random_uuid(),
+  student_key text unique not null,
+  absen text not null,
+  student_name text not null,
+  class_name text not null check (class_name in ('XI-1', 'XI-2')),
+  status text not null check (status in ('online', 'practice', 'exam', 'finished', 'offline')),
+  activity text not null,
+  current_question integer,
+  answered_numbers integer[] not null default '{}',
+  violation_count integer not null default 0,
+  last_score numeric(5, 2),
+  passed boolean,
+  logged_in_at timestamptz not null default now(),
+  last_active_at timestamptz not null default now()
+);
+
+alter table public.live_sessions enable row level security;
+
+create policy "Guru baca semua live_sessions"
+  on public.live_sessions
+  for select
+  to authenticated
+  using (true);
+
+create policy "Siswa update status live sendiri"
+  on public.live_sessions
+  for all
+  to anon
+  using (true)
+  with check (true);
+
 -- ============================================================================
 -- Row Level Security (RLS)
 -- ============================================================================

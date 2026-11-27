@@ -81,10 +81,29 @@ export interface StudentSummaryRow {
   autoSubmittedByViolation: boolean;
 }
 
+export type LiveStudentStatus = 'online' | 'practice' | 'exam' | 'finished' | 'offline';
+
+export interface LiveStudentSession {
+  key: string;
+  student: StudentProfile;
+  status: LiveStudentStatus;
+  activity: string;
+  currentQuestion?: number;
+  answeredNumbers: number[];
+  totalQuestions: number;
+  violationCount: number;
+  lastScore?: number;
+  passed?: boolean;
+  loggedInAt: string;
+  lastActiveAt: string;
+}
+
 const SETTINGS_KEY = 'remedial_matriks_settings_v5';
 const ATTEMPTS_KEY = 'remedial_matriks_attempts_v4';
 const ACTIVE_EXAM_KEY = 'remedial_matriks_active_exam_v4';
 const PRACTICE_DONE_KEY = 'remedial_matriks_practice_done_v4';
+const LIVE_SESSIONS_KEY = 'remedial_matriks_live_sessions_v1';
+const LIVE_CHANNEL_NAME = 'remedial_matriks_live_channel';
 
 export const DEFAULT_SETTINGS: RemedialSettings = {
   title: 'Remedial Matriks Kelas XI — Matematika Tingkat Lanjut',
@@ -336,7 +355,112 @@ export function recordExamAttempt(params: {
   const existing = loadAttempts();
   const updated = [record, ...existing];
   localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(updated));
+  notifyLiveChannel();
   return record;
+}
+
+function notifyLiveChannel(): void {
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const ch = new BroadcastChannel(LIVE_CHANNEL_NAME);
+      ch.postMessage({ type: 'sync', at: Date.now() });
+      ch.close();
+    }
+  } catch {
+    // ignore if unsupported
+  }
+}
+
+export function loadLiveSessions(): LiveStudentSession[] {
+  try {
+    const raw = localStorage.getItem(LIVE_SESSIONS_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as LiveStudentSession[];
+    return list.sort(
+      (a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime()
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function upsertLiveSession(params: {
+  student: StudentProfile;
+  status: LiveStudentStatus;
+  activity: string;
+  currentQuestion?: number;
+  answeredNumbers?: number[];
+  totalQuestions?: number;
+  violationCount?: number;
+  lastScore?: number;
+  passed?: boolean;
+}): void {
+  try {
+    const key = getStudentKey(params.student);
+    const now = new Date().toISOString();
+    const list = loadLiveSessions();
+    const existing = list.find((item) => item.key === key);
+
+    const updatedRecord: LiveStudentSession = {
+      key,
+      student: {
+        ...params.student,
+        absen: formatAbsen(params.student.absen),
+      },
+      status: params.status,
+      activity: params.activity,
+      currentQuestion: params.currentQuestion ?? existing?.currentQuestion,
+      answeredNumbers: params.answeredNumbers ?? existing?.answeredNumbers ?? [],
+      totalQuestions: params.totalQuestions ?? existing?.totalQuestions ?? 6,
+      violationCount: params.violationCount ?? existing?.violationCount ?? 0,
+      lastScore: params.lastScore ?? existing?.lastScore,
+      passed: params.passed ?? existing?.passed,
+      loggedInAt: existing?.loggedInAt ?? now,
+      lastActiveAt: now,
+    };
+
+    const next = [updatedRecord, ...list.filter((item) => item.key !== key)];
+    localStorage.setItem(LIVE_SESSIONS_KEY, JSON.stringify(next));
+    notifyLiveChannel();
+  } catch {
+    // ignore
+  }
+}
+
+export function markLiveSessionOffline(student: StudentProfile): void {
+  upsertLiveSession({
+    student,
+    status: 'offline',
+    activity: 'Keluar dari sesi',
+  });
+}
+
+export function subscribeLiveUpdates(onUpdate: () => void): () => void {
+  const handleStorage = (e: StorageEvent) => {
+    if (
+      e.key === LIVE_SESSIONS_KEY ||
+      e.key === ATTEMPTS_KEY ||
+      e.key === ACTIVE_EXAM_KEY
+    ) {
+      onUpdate();
+    }
+  };
+  window.addEventListener('storage', handleStorage);
+
+  let channel: BroadcastChannel | null = null;
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      channel = new BroadcastChannel(LIVE_CHANNEL_NAME);
+      channel.onmessage = () => onUpdate();
+    }
+  } catch {
+    channel = null;
+  }
+
+  return () => {
+    window.removeEventListener('storage', handleStorage);
+    channel?.close();
+  };
 }
 
 export function getStudentExamAttempts(student: StudentProfile): AttemptRecord[] {

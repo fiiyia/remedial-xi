@@ -24,6 +24,7 @@ interface ExamViewProps {
   maxViolations: number;
   onUpdateAnswers: (answers: ExamAnswersMap) => void;
   onRecordViolation: (event: ViolationEvent) => void;
+  onProgressChange?: (info: { currentQuestion: number; answeredNumbers: number[] }) => void;
   onSubmitExam: (
     questions: GeneratedQuestion[],
     answers: ExamAnswersMap,
@@ -54,6 +55,7 @@ export function ExamView({
   maxViolations,
   onUpdateAnswers,
   onRecordViolation,
+  onProgressChange,
   onSubmitExam,
 }: ExamViewProps) {
   const questions = useMemo(
@@ -193,7 +195,22 @@ export function ExamView({
   };
 
   const activeQuestion = questions[currentIndex];
-  const answeredCount = questions.filter((q) => isQuestionTouched(session.answers, q)).length;
+  const answeredNumbers = useMemo(
+    () =>
+      questions
+        .map((q, idx) => (isQuestionTouched(session.answers, q) ? idx + 1 : null))
+        .filter((n): n is number => n !== null),
+    [questions, session.answers]
+  );
+  const answeredCount = answeredNumbers.length;
+
+  useEffect(() => {
+    onProgressChange?.({
+      currentQuestion: currentIndex + 1,
+      answeredNumbers,
+    });
+  }, [currentIndex, answeredNumbers, onProgressChange]);
+
   const isUrgent = remainingSec <= 300;
   const violationCount = session.violations.length;
 

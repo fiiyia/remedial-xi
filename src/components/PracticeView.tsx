@@ -15,6 +15,7 @@ import { QuestionCard } from './QuestionCard';
 interface PracticeViewProps {
   initialCompetencyId: CompetencyId;
   className: ClassName;
+  onTopicChange?: (competencyId: CompetencyId) => void;
   onCompletePractice: () => void;
   onBack: () => void;
 }
@@ -22,6 +23,7 @@ interface PracticeViewProps {
 export function PracticeView({
   initialCompetencyId,
   className,
+  onTopicChange,
   onCompletePractice,
   onBack,
 }: PracticeViewProps) {
@@ -40,6 +42,7 @@ export function PracticeView({
     setSeed(generateSessionSeed());
     setAnswers({});
     setGradeResult(undefined);
+    onTopicChange?.(id);
   };
 
   const handleNewVariant = () => {

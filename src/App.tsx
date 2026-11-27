@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ArrowRight,
   BarChart3,
@@ -7,6 +7,7 @@ import {
   Home,
   LogOut,
   Menu,
+  Radio,
   Search,
   Settings,
   ShieldAlert,
@@ -14,11 +15,12 @@ import {
   X,
 } from 'lucide-react';
 import { gradeExam } from './lib/generator/grading';
-import type {
-  CompetencyId,
-  ExamAnswersMap,
-  ExamGradeResult,
-  GeneratedQuestion,
+import {
+  COMPETENCIES,
+  type CompetencyId,
+  type ExamAnswersMap,
+  type ExamGradeResult,
+  type GeneratedQuestion,
 } from './lib/generator/types';
 import { generateSessionSeed } from './lib/math/prng';
 import {
@@ -27,13 +29,18 @@ import {
   hasCompletedPractice,
   loadActiveExam,
   loadAttempts,
+  loadLiveSessions,
   loadSettings,
+  markLiveSessionOffline,
   markPracticeCompleted,
   recordExamAttempt,
   saveActiveExam,
   saveSettings,
+  subscribeLiveUpdates,
+  upsertLiveSession,
   type ActiveExamSession,
   type AttemptRecord,
+  type LiveStudentSession,
   type RemedialSettings,
   type StudentProfile,
   type ViolationEvent,
@@ -66,20 +73,57 @@ type AppView =
 export function App() {
   const [settings, setSettings] = useState<RemedialSettings>(() => loadSettings());
   const [attempts, setAttempts] = useState<AttemptRecord[]>(() => loadAttempts());
+  const [liveSessions, setLiveSessions] = useState<LiveStudentSession[]>(() =>
+    loadLiveSessions()
+  );
   const [student, setStudent] = useState<StudentProfile | null>(null);
   const [view, setView] = useState<AppView>({ kind: 'login' });
   const [globalSearch, setGlobalSearch] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const refreshAttempts = useCallback(() => {
+  const refreshLiveData = useCallback(() => {
     setAttempts(loadAttempts());
+    setLiveSessions(loadLiveSessions());
   }, []);
+
+  // Sinkronisasi real-time lintas tab untuk Dashboard Guru
+  useEffect(() => {
+    if (view.kind !== 'teacher') return;
+    refreshLiveData();
+    const unsubscribe = subscribeLiveUpdates(refreshLiveData);
+    const interval = setInterval(refreshLiveData, 3000);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, [view.kind, refreshLiveData]);
 
   const handleStudentLogin = (profile: StudentProfile) => {
     setStudent(profile);
     setGlobalSearch('');
-    refreshAttempts();
+    upsertLiveSession({
+      student: profile,
+      status: 'online',
+      activity: 'Baru masuk ke Beranda Remedial',
+      answeredNumbers: [],
+      violationCount: 0,
+    });
+    refreshLiveData();
     setView({ kind: 'student_home' });
+  };
+
+  const handleOpenPractice = (competencyId: CompetencyId) => {
+    if (student) {
+      const topic = COMPETENCIES.find((c) => c.id === competencyId);
+      upsertLiveSession({
+        student,
+        status: 'practice',
+        activity: `Latihan Topik ${competencyId}: ${topic?.shortTitle ?? ''}`,
+        currentQuestion: competencyId,
+      });
+    }
+    setView({ kind: 'practice', competencyId });
+    setMobileMenuOpen(false);
   };
 
   const handleStartExam = () => {
@@ -87,6 +131,13 @@ export function App() {
     setMobileMenuOpen(false);
     const existing = loadActiveExam(student);
     if (existing) {
+      upsertLiveSession({
+        student,
+        status: 'exam',
+        activity: 'Melanjutkan Ujian Remedial',
+        currentQuestion: 1,
+        violationCount: existing.violations.length,
+      });
       setView({ kind: 'exam', session: existing });
       return;
     }
@@ -99,6 +150,14 @@ export function App() {
       violations: [],
     };
     saveActiveExam(newSession);
+    upsertLiveSession({
+      student,
+      status: 'exam',
+      activity: 'Mulai Ujian Remedial — Soal 1',
+      currentQuestion: 1,
+      answeredNumbers: [],
+      violationCount: 0,
+    });
     setView({ kind: 'exam', session: newSession });
   };
 
@@ -111,14 +170,35 @@ export function App() {
     });
   };
 
+  const handleExamProgress = useCallback(
+    (info: { currentQuestion: number; answeredNumbers: number[] }) => {
+      if (!student) return;
+      upsertLiveSession({
+        student,
+        status: 'exam',
+        activity: `Mengerjakan Ujian — Soal ${info.currentQuestion} (${info.answeredNumbers.length}/6 terisi)`,
+        currentQuestion: info.currentQuestion,
+        answeredNumbers: info.answeredNumbers,
+      });
+    },
+    [student]
+  );
+
   const handleRecordViolation = useCallback((event: ViolationEvent) => {
     setView((prev) => {
       if (prev.kind !== 'exam') return prev;
+      const nextViolations = [...prev.session.violations, event];
       const updated: ActiveExamSession = {
         ...prev.session,
-        violations: [...prev.session.violations, event],
+        violations: nextViolations,
       };
       saveActiveExam(updated);
+      upsertLiveSession({
+        student: prev.session.student,
+        status: 'exam',
+        activity: `Peringatan Deteksi Layar (${nextViolations.length}×)`,
+        violationCount: nextViolations.length,
+      });
       return { kind: 'exam', session: updated };
     });
   }, []);
@@ -141,7 +221,16 @@ export function App() {
           autoSubmittedByViolation,
         });
         clearActiveExam();
+        upsertLiveSession({
+          student: prev.session.student,
+          status: 'finished',
+          activity: `Selesai Ujian — Skor ${grade.totalScore} (${grade.passed ? 'TUNTAS' : 'BELUM TUNTAS'})`,
+          violationCount: prev.session.violations.length,
+          lastScore: grade.totalScore,
+          passed: grade.passed,
+        });
         setAttempts(loadAttempts());
+        setLiveSessions(loadLiveSessions());
         return {
           kind: 'result',
           questions,
@@ -161,6 +250,9 @@ export function App() {
   };
 
   const handleLogout = () => {
+    if (student) {
+      markLiveSessionOffline(student);
+    }
     setStudent(null);
     setGlobalSearch('');
     setMobileMenuOpen(false);
@@ -174,9 +266,9 @@ export function App() {
           settings={settings}
           onStudentLogin={handleStudentLogin}
           onTeacherLogin={() => {
-            refreshAttempts();
+            refreshLiveData();
             setGlobalSearch('');
-            setView({ kind: 'teacher', tab: 'monitoring' });
+            setView({ kind: 'teacher', tab: 'live' });
           }}
         />
       </div>
@@ -210,10 +302,7 @@ export function App() {
       label: 'Latihan Soal',
       icon: BookOpen,
       active: view.kind === 'practice',
-      onClick: () => {
-        setView({ kind: 'practice', competencyId: 1 });
-        setMobileMenuOpen(false);
-      },
+      onClick: () => handleOpenPractice(1),
     },
     {
       id: 'exam',
@@ -234,6 +323,16 @@ export function App() {
     active: boolean;
     onClick: () => void;
   }> = [
+    {
+      id: 'live',
+      label: 'Live Monitor',
+      icon: Radio,
+      active: view.kind === 'teacher' && view.tab === 'live',
+      onClick: () => {
+        setView({ kind: 'teacher', tab: 'live' });
+        setMobileMenuOpen(false);
+      },
+    },
     {
       id: 'monitoring',
       label: 'Monitoring Siswa',
@@ -451,9 +550,7 @@ export function App() {
               activeExam={activeExam}
               practiceDone={practiceDone}
               searchQuery={globalSearch}
-              onStartPractice={(competencyId) =>
-                setView({ kind: 'practice', competencyId })
-              }
+              onStartPractice={handleOpenPractice}
               onStartExam={handleStartExam}
             />
           )}
@@ -462,8 +559,24 @@ export function App() {
             <PracticeView
               initialCompetencyId={view.competencyId}
               className={student.className}
+              onTopicChange={(id) => {
+                const topic = COMPETENCIES.find((c) => c.id === id);
+                upsertLiveSession({
+                  student,
+                  status: 'practice',
+                  activity: `Latihan Topik ${id}: ${topic?.shortTitle ?? ''}`,
+                  currentQuestion: id,
+                });
+              }}
               onCompletePractice={() => markPracticeCompleted(student)}
-              onBack={() => setView({ kind: 'student_home' })}
+              onBack={() => {
+                upsertLiveSession({
+                  student,
+                  status: 'online',
+                  activity: 'Kembali ke Beranda Remedial',
+                });
+                setView({ kind: 'student_home' });
+              }}
             />
           )}
 
@@ -473,6 +586,7 @@ export function App() {
               maxViolations={settings.maxViolations}
               onUpdateAnswers={handleUpdateExamAnswers}
               onRecordViolation={handleRecordViolation}
+              onProgressChange={handleExamProgress}
               onSubmitExam={handleSubmitExam}
             />
           )}
@@ -486,7 +600,7 @@ export function App() {
               violationCount={view.violationCount}
               autoSubmittedByViolation={view.autoSubmittedByViolation}
               onGoHome={() => setView({ kind: 'student_home' })}
-              onGoPractice={() => setView({ kind: 'practice', competencyId: 1 })}
+              onGoPractice={() => handleOpenPractice(1)}
               onRetakeExam={handleStartExam}
             />
           )}
@@ -495,8 +609,10 @@ export function App() {
             <TeacherDashboardView
               settings={settings}
               attempts={attempts}
+              liveSessions={liveSessions}
               activeTab={view.tab}
               externalSearch={globalSearch}
+              onRefreshLive={refreshLiveData}
               onTabChange={(nextTab) => setView({ kind: 'teacher', tab: nextTab })}
               onSaveSettings={handleSaveSettings}
             />

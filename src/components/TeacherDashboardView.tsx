@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import {
   CheckCircle2,
   Download,
+  Radio,
+  RefreshCw,
   Save,
   Search,
   ShieldAlert,
@@ -15,27 +17,72 @@ import {
   summarizeStudents,
   type AttemptRecord,
   type ClassName,
+  type LiveStudentSession,
+  type LiveStudentStatus,
   type RemedialSettings,
 } from '../lib/storage/repository';
 
-export type TeacherTab = 'monitoring' | 'integrity' | 'analytics' | 'settings';
+export type TeacherTab = 'live' | 'monitoring' | 'integrity' | 'analytics' | 'settings';
 
 interface TeacherDashboardViewProps {
   settings: RemedialSettings;
   attempts: AttemptRecord[];
+  liveSessions: LiveStudentSession[];
   activeTab: TeacherTab;
   externalSearch?: string;
+  onRefreshLive: () => void;
   onTabChange: (tab: TeacherTab) => void;
   onSaveSettings: (next: RemedialSettings) => void;
 }
 
 type ClassFilter = 'ALL' | ClassName;
 
+function getLiveStatusMeta(status: LiveStudentStatus): {
+  label: string;
+  badgeClass: string;
+  dotClass: string;
+} {
+  switch (status) {
+    case 'exam':
+      return {
+        label: 'Sedang Ujian',
+        badgeClass: 'bg-[#f3f2ff] text-[#6c6ce5]',
+        dotClass: 'bg-[#6c6ce5] animate-pulse',
+      };
+    case 'practice':
+      return {
+        label: 'Mode Latihan',
+        badgeClass: 'bg-[#fff6e0] text-[#b37400]',
+        dotClass: 'bg-[#ffb84d]',
+      };
+    case 'online':
+      return {
+        label: 'Online di Beranda',
+        badgeClass: 'bg-[#e6f9f1] text-[#28a870]',
+        dotClass: 'bg-[#34c78a] animate-pulse',
+      };
+    case 'finished':
+      return {
+        label: 'Selesai Ujian',
+        badgeClass: 'bg-[#e6f9f1] text-[#28a870]',
+        dotClass: 'bg-[#28a870]',
+      };
+    case 'offline':
+      return {
+        label: 'Keluar',
+        badgeClass: 'bg-[#f3f4fb] text-[#8a8da8]',
+        dotClass: 'bg-[#b5b8cc]',
+      };
+  }
+}
+
 export function TeacherDashboardView({
   settings,
   attempts,
+  liveSessions,
   activeTab,
   externalSearch = '',
+  onRefreshLive,
   onSaveSettings,
 }: TeacherDashboardViewProps) {
   const [localSearch, setLocalSearch] = useState('');
@@ -61,6 +108,23 @@ export function TeacherDashboardView({
       'XI-2-passed': xi2.filter((r) => r.passed).length,
     };
   }, [summaryRows]);
+
+  const filteredLiveSessions = useMemo(() => {
+    return liveSessions.filter((s) => {
+      const matchClass = classFilter === 'ALL' || s.student.className === classFilter;
+      const matchQuery =
+        !effectiveSearch ||
+        s.student.name.toLowerCase().includes(effectiveSearch) ||
+        s.student.absen.toLowerCase().includes(effectiveSearch) ||
+        s.student.className.toLowerCase().includes(effectiveSearch);
+      return matchClass && matchQuery;
+    });
+  }, [liveSessions, classFilter, effectiveSearch]);
+
+  const activeLiveCount = useMemo(
+    () => filteredLiveSessions.filter((s) => s.status !== 'offline').length,
+    [filteredLiveSessions]
+  );
 
   const filteredRows = useMemo(() => {
     return summaryRows.filter((r) => {
@@ -297,6 +361,148 @@ export function TeacherDashboardView({
           </dd>
         </div>
       </dl>
+
+      {/* TAB 0: MONITORING LIVE REAL-TIME */}
+      {activeTab === 'live' && (
+        <section className="soft-card space-y-4 rounded-3xl p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-bold text-[#262542]">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34c78a] opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#28a870]" />
+                </span>
+                <span>Monitoring Live Aktivitas Murid</span>
+              </h2>
+              <p className="mt-0.5 text-xs text-[#8a8da8]">
+                Memantau secara langsung siapa saja yang login, mode yang dibuka, progres soal
+                1–6, dan status deteksi layar ({activeLiveCount} aktif).
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onRefreshLive}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#eceef8] bg-[#fafbff] px-3 py-1.5 text-xs font-semibold text-[#6c6ce5] transition hover:bg-[#f3f2ff]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Segarkan</span>
+            </button>
+          </div>
+
+          {filteredLiveSessions.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#d8daf0] bg-[#fafbff] px-5 py-8 text-center">
+              <Radio className="mx-auto h-7 w-7 text-[#9a9db8]" aria-hidden="true" />
+              <p className="mt-2 text-sm font-bold text-[#262542]">
+                Belum ada murid yang login saat ini
+              </p>
+              <p className="mx-auto mt-1 max-w-md text-xs text-[#8a8da8]">
+                Begitu murid masuk di tab lain (atau perangkat lain jika tersambung Supabase),
+                status login, soal yang sedang dibuka, dan soal yang sudah dikerjakan akan muncul
+                otomatis di sini secara real-time.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3.5 md:grid-cols-2">
+              {filteredLiveSessions.map((item) => {
+                const meta = getLiveStatusMeta(item.status);
+                const questionSlots = [1, 2, 3, 4, 5, 6];
+                return (
+                  <div
+                    key={item.key}
+                    className="rounded-2xl border border-[#eceef8] bg-[#fafbff] p-4 transition hover:border-[#cfd0f7]"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-bold text-[#262542]">
+                            {item.student.name}
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              item.student.className === 'XI-1'
+                                ? 'bg-[#fff2f6] text-[#c75479]'
+                                : 'bg-[#eefbf5] text-[#28a870]'
+                            }`}
+                          >
+                            {item.student.className} · Absen {item.student.absen}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs font-medium text-[#5c536d]">{item.activity}</p>
+                      </div>
+
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${meta.badgeClass}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
+                        {meta.label}
+                      </span>
+                    </div>
+
+                    {/* Progres Soal 1 - 6 */}
+                    <div className="mt-3.5 border-t border-[#eceef8] pt-3">
+                      <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                        <span className="font-semibold text-[#7c7f9d]">
+                          Progres Soal ({item.answeredNumbers.length}/{item.totalQuestions} terisi)
+                        </span>
+                        {item.violationCount > 0 ? (
+                          <span className="font-bold text-[#d94657]">
+                            {item.violationCount}× Pindah Layar
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-[#28a870]">Layar Aman</span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {questionSlots.map((num) => {
+                          const isAnswered = item.answeredNumbers.includes(num);
+                          const isCurrent =
+                            (item.status === 'exam' || item.status === 'practice') &&
+                            item.currentQuestion === num;
+
+                          let boxStyle = 'border-[#e5e7f5] bg-white text-[#9a9db8]';
+                          if (isAnswered) {
+                            boxStyle = 'border-[#bcead5] bg-[#e6f9f1] text-[#28a870]';
+                          }
+                          if (isCurrent) {
+                            boxStyle += ' ring-2 ring-[#6c6ce5] text-[#6c6ce5]';
+                          }
+
+                          return (
+                            <div
+                              key={num}
+                              title={
+                                isAnswered
+                                  ? `Soal ${num}: Sudah diisi`
+                                  : isCurrent
+                                    ? `Soal ${num}: Sedang dibuka`
+                                    : `Soal ${num}: Belum diisi`
+                              }
+                              className={`flex h-8 items-center justify-center rounded-lg border text-xs font-bold ${boxStyle}`}
+                            >
+                              {num}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#8a8da8]">
+                        <span>
+                          Login: {new Date(item.loggedInAt).toLocaleTimeString('id-ID')}
+                        </span>
+                        <span>
+                          Update terakhir: {new Date(item.lastActiveAt).toLocaleTimeString('id-ID')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* TAB 1: MONITORING SISWA */}
       {activeTab === 'monitoring' && (
