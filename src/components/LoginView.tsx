@@ -45,7 +45,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
     setFormError('');
 
     if (teacherPin.trim() !== settings.teacherPin) {
-      setFormError(`PIN Guru belum sesuai (demo: ${settings.teacherPin}).`);
+      setFormError('PIN Guru tidak sesuai. Silakan periksa kembali.');
       return;
     }
 
@@ -255,10 +255,7 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                   PIN Guru
                 </label>
                 <span id="pin-hint" className="mb-1 block text-xs text-[#8a8da8]">
-                  Demo PIN default:{' '}
-                  <code className="font-mono-math font-semibold text-[#6c6ce5]">
-                    {settings.teacherPin}
-                  </code>
+                  Masukkan PIN khusus guru pengampu.
                 </span>
                 <input
                   id="teacher-pin"

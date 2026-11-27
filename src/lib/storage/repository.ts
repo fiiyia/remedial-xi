@@ -81,7 +81,7 @@ export interface StudentSummaryRow {
   autoSubmittedByViolation: boolean;
 }
 
-const SETTINGS_KEY = 'remedial_matriks_settings_v4';
+const SETTINGS_KEY = 'remedial_matriks_settings_v5';
 const ATTEMPTS_KEY = 'remedial_matriks_attempts_v4';
 const ACTIVE_EXAM_KEY = 'remedial_matriks_active_exam_v4';
 const PRACTICE_DONE_KEY = 'remedial_matriks_practice_done_v4';
@@ -93,7 +93,7 @@ export const DEFAULT_SETTINGS: RemedialSettings = {
   maxAttempts: 3,
   maxViolations: 3,
   requirePractice: false,
-  teacherPin: 'GURU2026',
+  teacherPin: '1810DB',
 };
 
 export function getViolationLabel(type: ViolationType): string {
