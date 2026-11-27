@@ -11,6 +11,8 @@ interface ResultViewProps {
   answers: ExamAnswersMap;
   grade: ExamGradeResult;
   remainingAttempts: number;
+  violationCount?: number;
+  autoSubmittedByViolation?: boolean;
   onGoHome: () => void;
   onGoPractice: () => void;
   onRetakeExam: () => void;
@@ -21,6 +23,8 @@ export function ResultView({
   answers,
   grade,
   remainingAttempts,
+  violationCount = 0,
+  autoSubmittedByViolation = false,
   onGoHome,
   onGoPractice,
   onRetakeExam,
@@ -68,6 +72,13 @@ export function ResultView({
                   ? `Selamat! Nilai kamu telah mencapai KKM (${grade.kkm}) dan otomatis terekam di Dashboard Guru.`
                   : `Nilai kamu masih di bawah KKM (${grade.kkm}). Pelajari pembahasan di bawah, berlatih kembali di Mode Latihan, lalu ulangi ujian.`}
               </p>
+              {(autoSubmittedByViolation || violationCount > 0) && (
+                <p className="mt-2 inline-block rounded-lg bg-rose-100/80 px-3 py-1 text-xs font-semibold text-rose-800">
+                  {autoSubmittedByViolation
+                    ? `Ujian dikumpulkan otomatis karena batas deteksi layar (${violationCount}× pelanggaran) tercapai.`
+                    : `Catatan Deteksi Layar: ${violationCount}× peringatan tercatat ke Dashboard Guru.`}
+                </p>
+              )}
             </div>
           </div>
 

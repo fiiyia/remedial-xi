@@ -84,8 +84,8 @@ export function MatrixInputGrid({
         )}
 
         <div
-          className="matrix-bracket-box"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(4.25rem, 5.25rem))` }}
+          className="matrix-bracket-box max-w-full"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(3.25rem, 4.75rem))` }}
           role="group"
           aria-label={label}
         >

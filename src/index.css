@@ -2,6 +2,11 @@
 @import "katex/dist/katex.min.css";
 
 @layer base {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background-color: #f3f4fb;
@@ -106,8 +111,9 @@
   --label-3: "Kelas";
   --label-4: "Nilai Tertinggi";
   --label-5: "Percobaan";
-  --label-6: "Waktu Selesai";
-  --label-7: "Status KKM";
+  --label-6: "Deteksi Layar";
+  --label-7: "Waktu Selesai";
+  --label-8: "Status KKM";
 }
 
 .monitoring-table thead {
@@ -179,6 +185,7 @@
   .monitoring-table tbody td:nth-child(5)::before { content: var(--label-5); }
   .monitoring-table tbody td:nth-child(6)::before { content: var(--label-6); }
   .monitoring-table tbody td:nth-child(7)::before { content: var(--label-7); }
+  .monitoring-table tbody td:nth-child(8)::before { content: var(--label-8); }
 }
 
 .katex-display {

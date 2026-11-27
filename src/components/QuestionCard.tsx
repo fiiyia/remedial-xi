@@ -79,15 +79,19 @@ export function QuestionCard({
       </div>
 
       {/* Narasi & Rumus Soal */}
-      <div className="space-y-3 text-sm leading-relaxed text-slate-700 sm:text-base">
+      <div
+        className={`space-y-3 text-sm leading-relaxed text-slate-700 sm:text-base ${
+          mode === 'exam' ? 'select-none' : ''
+        }`}
+      >
         <p className="whitespace-pre-line">{question.promptText}</p>
         {question.promptLatex && (
-          <div className="rounded-xl bg-slate-50 px-4 py-3 text-slate-900 ring-1 ring-slate-200/70">
+          <div className="rounded-xl bg-[#f8f9fe] px-3 py-3 text-[#262542] ring-1 ring-[#eceef8] sm:px-4">
             <MathBlock latex={question.promptLatex} display />
           </div>
         )}
         {question.subPromptText && (
-          <p className="font-medium text-slate-800">{question.subPromptText}</p>
+          <p className="font-medium text-[#262542]">{question.subPromptText}</p>
         )}
       </div>
 
@@ -159,7 +163,7 @@ export function QuestionCard({
                     <MathBlock latex={field.labelLatex} />
                   </span>
                 )}
-                <div className="relative flex items-center">
+                <div className="relative flex w-full items-center sm:w-auto">
                   {field.prefix && (
                     <span className="pointer-events-none absolute left-3 text-sm font-semibold text-slate-500">
                       {field.prefix}
@@ -177,7 +181,7 @@ export function QuestionCard({
                       field.placeholder ??
                       (field.allowCurrency ? 'contoh: 15000' : 'contoh: -3 atau 1/2')
                     }
-                    className={`font-mono-math h-11 w-48 rounded-lg border text-base font-medium outline-none transition sm:w-56 ${
+                    className={`font-mono-math h-11 w-full rounded-lg border text-base font-medium outline-none transition sm:w-56 ${
                       field.prefix ? 'pl-9 pr-3' : 'px-3'
                     } ${borderStyle}`}
                   />
@@ -238,15 +242,19 @@ export function QuestionCard({
         </div>
       )}
 
-      {/* Pembahasan Langkah demi Langkah (Mode Latihan setelah dicek, atau Mode Review) */}
-      {(mode === 'review' || (mode === 'practice' && gradeResult)) && (
-        <div className="mt-5 rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
+      {/* Pembahasan Langkah demi Langkah (Selalu tersedia di Mode Latihan & Mode Review) */}
+      {(mode === 'review' || mode === 'practice') && (
+        <div className="mt-5 rounded-xl border border-[#dcdbf9] bg-[#f6f6fe] p-4">
           <button
             type="button"
             onClick={() => setShowSolution((s) => !s)}
-            className="flex w-full items-center justify-between text-left text-sm font-bold text-indigo-900"
+            className="flex w-full items-center justify-between text-left text-sm font-bold text-[#4a48a8]"
           >
-            <span>Pembahasan Langkah demi Langkah</span>
+            <span>
+              {showSolution
+                ? 'Sembunyikan Pembahasan Langkah demi Langkah'
+                : 'Lihat Pembahasan Langkah demi Langkah (Bebas Dibuka)'}
+            </span>
             <ChevronDown
               className={`h-4 w-4 transition-transform ${showSolution ? 'rotate-180' : ''}`}
               aria-hidden="true"

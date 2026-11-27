@@ -20,7 +20,6 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
   const [absen, setAbsen] = useState('');
   const [name, setName] = useState('');
   const [className, setClassName] = useState<ClassName>('XI-1');
-  const [accessCode, setAccessCode] = useState('');
   const [teacherPin, setTeacherPin] = useState('');
   const [formError, setFormError] = useState('');
 
@@ -31,13 +30,6 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
     const absenNum = Number.parseInt(absen, 10);
     if (Number.isNaN(absenNum) || absenNum < 1 || absenNum > 45) {
       setFormError('No. Absen harus berupa angka antara 1 sampai 45.');
-      return;
-    }
-
-    if (accessCode.trim().toUpperCase() !== settings.accessCode.trim().toUpperCase()) {
-      setFormError(
-        `Kode remedial belum sesuai. Cek lagi kode dari guru ya (demo: ${settings.accessCode}).`
-      );
       return;
     }
 
@@ -234,36 +226,6 @@ export function LoginView({ settings, onStudentLogin, onTeacherLogin }: LoginVie
                   <div className="field-error-msg">
                     <span role="img" aria-label="Error">!</span> Minimal 3 karakter.
                   </div>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="access-code"
-                  className="block text-sm font-bold text-[#262542]"
-                >
-                  Kode Remedial
-                </label>
-                <span id="code-hint" className="mb-1 block text-xs text-[#8a8da8]">
-                  Demo kode:{' '}
-                  <code className="font-mono-math font-semibold text-[#6c6ce5]">
-                    {settings.accessCode}
-                  </code>
-                </span>
-                <input
-                  id="access-code"
-                  name="accessCode"
-                  type="text"
-                  required
-                  aria-describedby="code-hint"
-                  aria-invalid="false"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value)}
-                  placeholder={settings.accessCode}
-                  className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm uppercase text-[#262542] outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
-                />
-                <div className="field-error-msg">
-                  <span role="img" aria-label="Error">!</span> Kode remedial wajib diisi.
                 </div>
               </div>
 

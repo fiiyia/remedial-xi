@@ -1,21 +1,31 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Download, Save, Search } from 'lucide-react';
+import {
+  CheckCircle2,
+  Download,
+  Save,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+} from 'lucide-react';
 import { COMPETENCIES } from '../lib/generator/types';
 import {
   AVAILABLE_CLASSES,
   exportSummaryToCsv,
+  getViolationLabel,
   summarizeStudents,
   type AttemptRecord,
   type ClassName,
   type RemedialSettings,
 } from '../lib/storage/repository';
 
+export type TeacherTab = 'monitoring' | 'integrity' | 'analytics' | 'settings';
+
 interface TeacherDashboardViewProps {
   settings: RemedialSettings;
   attempts: AttemptRecord[];
-  activeTab: 'monitoring' | 'analytics' | 'settings';
+  activeTab: TeacherTab;
   externalSearch?: string;
-  onTabChange: (tab: 'monitoring' | 'analytics' | 'settings') => void;
+  onTabChange: (tab: TeacherTab) => void;
   onSaveSettings: (next: RemedialSettings) => void;
 }
 
@@ -64,6 +74,48 @@ export function TeacherDashboardView({
     });
   }, [summaryRows, effectiveSearch, classFilter]);
 
+  const allViolationLogs = useMemo(() => {
+    const logs: Array<{
+      id: string;
+      studentName: string;
+      absen: string;
+      className: ClassName;
+      type: AttemptRecord['violations'][number]['type'];
+      detail: string;
+      timestamp: string;
+      autoSubmitted: boolean;
+    }> = [];
+
+    for (const att of attempts) {
+      if (att.mode !== 'exam') continue;
+      if (classFilter !== 'ALL' && att.student.className !== classFilter) continue;
+      const matchQuery =
+        !effectiveSearch ||
+        att.student.name.toLowerCase().includes(effectiveSearch) ||
+        att.student.absen.toLowerCase().includes(effectiveSearch) ||
+        att.student.className.toLowerCase().includes(effectiveSearch);
+      if (!matchQuery) continue;
+
+      for (let i = 0; i < (att.violations?.length ?? 0); i++) {
+        const v = att.violations[i];
+        logs.push({
+          id: `${att.id}-v${i}`,
+          studentName: att.student.name,
+          absen: att.student.absen,
+          className: att.student.className,
+          type: v.type,
+          detail: v.detail,
+          timestamp: v.timestamp,
+          autoSubmitted: Boolean(att.autoSubmittedByViolation),
+        });
+      }
+    }
+
+    return logs.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [attempts, classFilter, effectiveSearch]);
+
   const stats = useMemo(() => {
     const scopeRows =
       classFilter === 'ALL'
@@ -71,13 +123,14 @@ export function TeacherDashboardView({
         : summaryRows.filter((r) => r.className === classFilter);
     const totalStudents = scopeRows.length;
     const passedStudents = scopeRows.filter((r) => r.passed).length;
+    const flaggedStudents = scopeRows.filter((r) => r.totalViolations > 0).length;
     const passRate =
       totalStudents > 0 ? Math.round((passedStudents / totalStudents) * 100) : 0;
     const avgScore =
       totalStudents > 0
         ? (scopeRows.reduce((acc, r) => acc + r.bestScore, 0) / totalStudents).toFixed(1)
         : '0.0';
-    return { totalStudents, passedStudents, passRate, avgScore };
+    return { totalStudents, passedStudents, flaggedStudents, passRate, avgScore };
   }, [summaryRows, classFilter]);
 
   const itemAnalytics = useMemo(() => {
@@ -114,12 +167,6 @@ export function TeacherDashboardView({
     });
   }, [attempts, classFilter]);
 
-  const hardestTopic = useMemo(() => {
-    const withData = itemAnalytics.filter((a) => a.attemptsCount > 0);
-    if (withData.length === 0) return null;
-    return [...withData].sort((a, b) => a.masteryPct - b.masteryPct)[0];
-  }, [itemAnalytics]);
-
   const handleExportCsv = () => {
     const csv = exportSummaryToCsv(filteredRows, settings.kkm);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -136,10 +183,7 @@ export function TeacherDashboardView({
 
   const handleSaveSettingsSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSaveSettings({
-      ...draft,
-      accessCode: draft.accessCode.trim().toUpperCase(),
-    });
+    onSaveSettings(draft);
     setSavedNotice(true);
     setTimeout(() => setSavedNotice(false), 2500);
   };
@@ -147,12 +191,12 @@ export function TeacherDashboardView({
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Banner Guru Periwinkle */}
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-[#7372F3] via-[#7E7AF6] to-[#6866E6] px-6 py-5 text-white shadow-md shadow-[#6c6ce5]/15">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-[#7372F3] via-[#7E7AF6] to-[#6866E6] px-5 py-5 text-white shadow-md shadow-[#6c6ce5]/15 sm:px-6">
         <div>
           <p className="text-xs font-semibold text-white/80">
             Dashboard Guru · SMA Don Bosco II
           </p>
-          <h1 className="mt-0.5 text-xl font-extrabold sm:text-2xl">{settings.title}</h1>
+          <h1 className="mt-0.5 text-lg font-extrabold sm:text-2xl">{settings.title}</h1>
         </div>
 
         <button
@@ -217,12 +261,12 @@ export function TeacherDashboardView({
       </div>
 
       {/* KPI Ringkasan */}
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <div className="soft-card rounded-2xl p-4">
           <dt className="text-xs font-medium text-[#8a8da8]">
             Peserta ({classFilter === 'ALL' ? 'XI-1 & XI-2' : classFilter})
           </dt>
-          <dd className="mt-1 text-2xl font-extrabold text-[#262542]">
+          <dd className="mt-1 text-xl font-extrabold text-[#262542] sm:text-2xl">
             {stats.totalStudents} siswa
           </dd>
         </div>
@@ -230,32 +274,35 @@ export function TeacherDashboardView({
           <dt className="text-xs font-medium text-[#28a870]">
             Ketuntasan (KKM {settings.kkm})
           </dt>
-          <dd className="mt-1 text-2xl font-extrabold text-[#28a870]">
+          <dd className="mt-1 text-xl font-extrabold text-[#28a870] sm:text-2xl">
             {stats.passRate}%{' '}
-            <span className="text-sm font-medium text-[#8a8da8]">
+            <span className="text-xs font-medium text-[#8a8da8] sm:text-sm">
               ({stats.passedStudents}/{stats.totalStudents})
             </span>
           </dd>
         </div>
         <div className="soft-card rounded-2xl p-4">
-          <dt className="text-xs font-medium text-[#8a8da8]">Rata-rata Nilai Tertinggi</dt>
-          <dd className="mt-1 text-2xl font-extrabold text-[#262542]">{stats.avgScore}</dd>
+          <dt className="text-xs font-medium text-[#8a8da8]">Rata-rata Nilai</dt>
+          <dd className="mt-1 text-xl font-extrabold text-[#262542] sm:text-2xl">
+            {stats.avgScore}
+          </dd>
         </div>
         <div className="soft-card rounded-2xl p-4">
-          <dt className="text-xs font-medium text-[#d94657]">Topik Paling Sulit</dt>
-          <dd className="mt-1 text-sm font-bold text-[#d94657]">
-            {hardestTopic
-              ? `No. ${hardestTopic.id}: ${hardestTopic.shortTitle} (${hardestTopic.masteryPct}%)`
-              : 'Belum ada data'}
+          <dt className="text-xs font-medium text-[#d94657]">Deteksi Pelanggaran Layar</dt>
+          <dd className="mt-1 text-xl font-extrabold text-[#d94657] sm:text-2xl">
+            {stats.flaggedStudents}{' '}
+            <span className="text-xs font-medium text-[#8a8da8] sm:text-sm">
+              siswa ({allViolationLogs.length} log)
+            </span>
           </dd>
         </div>
       </dl>
 
       {/* TAB 1: MONITORING SISWA */}
       {activeTab === 'monitoring' && (
-        <section className="soft-card space-y-4 rounded-3xl p-5">
+        <section className="soft-card space-y-4 rounded-3xl p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative min-w-56 flex-1 sm:hidden">
+            <div className="relative min-w-48 flex-1 sm:hidden">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a9db8]"
                 aria-hidden="true"
@@ -284,7 +331,7 @@ export function TeacherDashboardView({
           >
             <table className="monitoring-table text-sm">
               <caption id="monitoring-table-caption" className="sr-only">
-                Daftar monitoring hasil ujian remedial siswa kelas XI-1 dan XI-2
+                Daftar monitoring hasil ujian remedial dan deteksi layar siswa kelas XI-1 dan XI-2
               </caption>
               <thead className="bg-[#f6f7fd] text-xs uppercase tracking-wide text-[#7c7f9d]">
                 <tr>
@@ -304,6 +351,9 @@ export function TeacherDashboardView({
                     Percobaan
                   </th>
                   <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
+                    Deteksi Layar
+                  </th>
+                  <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
                     Waktu Selesai
                   </th>
                   <th scope="col" className="border-b border-[#eceef8] px-4 py-3 text-left">
@@ -314,7 +364,7 @@ export function TeacherDashboardView({
               <tbody className="divide-y divide-[#f3f4fb]">
                 {filteredRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-[#8a8da8]">
+                    <td colSpan={8} className="px-4 py-8 text-center text-[#8a8da8]">
                       Tidak ada data siswa yang cocok dengan filter.
                     </td>
                   </tr>
@@ -342,6 +392,26 @@ export function TeacherDashboardView({
                         {row.bestScore}
                       </td>
                       <td className="px-4 py-3 text-[#7c7f9d]">{row.attemptsCount}×</td>
+                      <td className="px-4 py-3">
+                        {row.totalViolations === 0 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f9f1] px-2.5 py-0.5 text-xs font-semibold text-[#28a870]">
+                            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                            Aman (0)
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              row.autoSubmittedByViolation
+                                ? 'bg-[#ffeff1] text-[#d94657]'
+                                : 'bg-[#fff6e0] text-[#b37400]'
+                            }`}
+                          >
+                            <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+                            {row.totalViolations}×
+                            {row.autoSubmittedByViolation ? ' Auto-Submit' : ' Peringatan'}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-xs text-[#8a8da8]">
                         {new Date(row.lastSubmittedAt).toLocaleString('id-ID')}
                       </td>
@@ -365,9 +435,65 @@ export function TeacherDashboardView({
         </section>
       )}
 
-      {/* TAB 2: ANALITIK BUTIR SOAL */}
+      {/* TAB 2: LOG DETEKSI LAYAR / ANTI-MENCONTEK */}
+      {activeTab === 'integrity' && (
+        <section className="soft-card space-y-4 rounded-3xl p-4 sm:p-5">
+          <div>
+            <h2 className="flex items-center gap-2 text-base font-bold text-[#262542]">
+              <ShieldAlert className="h-5 w-5 text-[#d94657]" aria-hidden="true" />
+              <span>
+                Monitoring Deteksi Layar &amp; Anti-Mencontek (
+                {classFilter === 'ALL' ? 'XI-1 & XI-2' : `Kelas ${classFilter}`})
+              </span>
+            </h2>
+            <p className="mt-0.5 text-xs text-[#8a8da8]">
+              Mencatat otomatis setiap kali siswa berpindah tab, keluar jendela browser, keluar
+              layar penuh, atau mencoba menyalin soal selama Mode Ujian Remedial.
+            </p>
+          </div>
+
+          {allViolationLogs.length === 0 ? (
+            <div className="rounded-2xl border border-[#bcead5] bg-[#eefbf5] p-6 text-center">
+              <ShieldCheck className="mx-auto h-7 w-7 text-[#28a870]" aria-hidden="true" />
+              <p className="mt-2 text-sm font-bold text-[#28a870]">
+                Tidak ada pelanggaran layar terdeteksi
+              </p>
+              <p className="mt-0.5 text-xs text-[#5c536d]">
+                Seluruh peserta mengerjakan ujian remedial dengan tertib di layar ujian.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {allViolationLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#eceef8] bg-[#fafbff] p-4"
+                >
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-bold text-[#262542]">{log.studentName}</span>
+                      <span className="rounded-full bg-[#f3f2ff] px-2 py-0.5 text-[11px] font-semibold text-[#6c6ce5]">
+                        {log.className} · Absen {log.absen}
+                      </span>
+                      <span className="rounded-full bg-[#ffeff1] px-2.5 py-0.5 text-[11px] font-bold text-[#d94657]">
+                        {getViolationLabel(log.type)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5c536d]">{log.detail}</p>
+                  </div>
+                  <div className="font-mono-math text-[11px] font-medium text-[#8a8da8]">
+                    {new Date(log.timestamp).toLocaleString('id-ID')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* TAB 3: ANALITIK BUTIR SOAL */}
       {activeTab === 'analytics' && (
-        <section className="soft-card space-y-4 rounded-3xl p-5">
+        <section className="soft-card space-y-4 rounded-3xl p-4 sm:p-5">
           <div>
             <h2 className="text-base font-bold text-[#262542]">
               Analisis Penguasaan 6 Kompetensi Matriks Kelas XI (
@@ -421,9 +547,9 @@ export function TeacherDashboardView({
         </section>
       )}
 
-      {/* TAB 3: PENGATURAN REMEDIAL */}
+      {/* TAB 4: PENGATURAN REMEDIAL */}
       {activeTab === 'settings' && (
-        <section className="soft-card rounded-3xl p-6">
+        <section className="soft-card rounded-3xl p-5 sm:p-6">
           <form onSubmit={handleSaveSettingsSubmit} className="max-w-xl space-y-4">
             <div>
               <label htmlFor="set-title" className="block text-sm font-bold text-[#262542]">
@@ -440,24 +566,6 @@ export function TeacherDashboardView({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="set-code" className="block text-sm font-bold text-[#262542]">
-                  Kode Akses Remedial
-                </label>
-                <span className="mb-1 block text-xs text-[#8a8da8]">
-                  Dibagikan ke siswa XI-1 &amp; XI-2.
-                </span>
-                <input
-                  id="set-code"
-                  type="text"
-                  required
-                  minLength={4}
-                  value={draft.accessCode}
-                  onChange={(e) => setDraft({ ...draft, accessCode: e.target.value })}
-                  className="form-control font-mono-math h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm uppercase outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
-                />
-              </div>
-
               <div>
                 <label htmlFor="set-kkm" className="block text-sm font-bold text-[#262542]">
                   Nilai KKM (1–100)
@@ -518,6 +626,30 @@ export function TeacherDashboardView({
                   className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
                 />
               </div>
+
+              <div>
+                <label
+                  htmlFor="set-violations"
+                  className="block text-sm font-bold text-[#262542]"
+                >
+                  Batas Pelanggaran Layar
+                </label>
+                <span className="mb-1 block text-xs text-[#8a8da8]">
+                  Auto-submit jika tercapai (default: 3×)
+                </span>
+                <input
+                  id="set-violations"
+                  type="number"
+                  min={1}
+                  max={10}
+                  required
+                  value={draft.maxViolations}
+                  onChange={(e) =>
+                    setDraft({ ...draft, maxViolations: Number(e.target.value) })
+                  }
+                  className="form-control h-11 w-full rounded-xl border border-[#e5e7f5] bg-[#fafbff] px-3 text-sm outline-none focus:border-[#6c6ce5] focus:bg-white focus:ring-2 focus:ring-[#e8e8ff]"
+                />
+              </div>
             </div>
 
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#eceef8] bg-[#fafbff] p-3.5">
@@ -531,8 +663,8 @@ export function TeacherDashboardView({
                 <strong className="block text-[#262542]">
                   Wajibkan Mode Latihan sebelum Ujian Remedial
                 </strong>
-                Siswa harus memeriksa minimal 1 soal di Mode Latihan sebelum tombol Mulai Ujian
-                terbuka.
+                Siswa harus mencoba minimal 1 soal di Mode Latihan (jawaban tidak harus benar)
+                sebelum tombol Mulai Ujian terbuka.
               </span>
             </label>
 

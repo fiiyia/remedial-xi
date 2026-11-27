@@ -13,6 +13,7 @@ create table if not exists public.remedial_sessions (
   kkm integer not null default 78 check (kkm between 1 and 100),
   duration_minutes integer not null default 90 check (duration_minutes between 5 and 180),
   max_attempts integer not null default 3 check (max_attempts between 1 and 20),
+  max_violations integer not null default 3 check (max_violations between 1 and 10),
   require_practice boolean not null default false,
   is_active boolean not null default true,
   created_by uuid references auth.users(id),
@@ -41,6 +42,9 @@ create table if not exists public.attempts (
   item_scores jsonb not null default '[]'::jsonb,
   total_score numeric(5, 2) not null default 0,
   passed boolean not null default false,
+  violation_count integer not null default 0,
+  violations jsonb not null default '[]'::jsonb,
+  auto_submitted_by_violation boolean not null default false,
   started_at timestamptz not null default now(),
   submitted_at timestamptz,
   duration_seconds integer

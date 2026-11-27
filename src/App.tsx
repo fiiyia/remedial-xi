@@ -9,6 +9,7 @@ import {
   Menu,
   Search,
   Settings,
+  ShieldAlert,
   Users,
   X,
 } from 'lucide-react';
@@ -35,15 +36,17 @@ import {
   type AttemptRecord,
   type RemedialSettings,
   type StudentProfile,
+  type ViolationEvent,
 } from './lib/storage/repository';
 import { ExamView } from './components/ExamView';
 import { LoginView } from './components/LoginView';
 import { PracticeView } from './components/PracticeView';
 import { ResultView } from './components/ResultView';
 import { StudentHomeView } from './components/StudentHomeView';
-import { TeacherDashboardView } from './components/TeacherDashboardView';
-
-type TeacherTab = 'monitoring' | 'analytics' | 'settings';
+import {
+  TeacherDashboardView,
+  type TeacherTab,
+} from './components/TeacherDashboardView';
 
 type AppView =
   | { kind: 'login' }
@@ -55,6 +58,8 @@ type AppView =
       questions: GeneratedQuestion[];
       answers: ExamAnswersMap;
       grade: ExamGradeResult;
+      violationCount: number;
+      autoSubmittedByViolation: boolean;
     }
   | { kind: 'teacher'; tab: TeacherTab };
 
@@ -91,6 +96,7 @@ export function App() {
       startedAt: Date.now(),
       durationMinutes: settings.durationMinutes,
       answers: {},
+      violations: [],
     };
     saveActiveExam(newSession);
     setView({ kind: 'exam', session: newSession });
@@ -105,8 +111,24 @@ export function App() {
     });
   };
 
+  const handleRecordViolation = useCallback((event: ViolationEvent) => {
+    setView((prev) => {
+      if (prev.kind !== 'exam') return prev;
+      const updated: ActiveExamSession = {
+        ...prev.session,
+        violations: [...prev.session.violations, event],
+      };
+      saveActiveExam(updated);
+      return { kind: 'exam', session: updated };
+    });
+  }, []);
+
   const handleSubmitExam = useCallback(
-    (questions: GeneratedQuestion[], answers: ExamAnswersMap) => {
+    (
+      questions: GeneratedQuestion[],
+      answers: ExamAnswersMap,
+      autoSubmittedByViolation = false
+    ) => {
       setView((prev) => {
         if (prev.kind !== 'exam') return prev;
         const grade = gradeExam(questions, answers, settings.kkm);
@@ -115,10 +137,19 @@ export function App() {
           seed: prev.session.seed,
           grade,
           startedAt: prev.session.startedAt,
+          violations: prev.session.violations,
+          autoSubmittedByViolation,
         });
         clearActiveExam();
         setAttempts(loadAttempts());
-        return { kind: 'result', questions, answers, grade };
+        return {
+          kind: 'result',
+          questions,
+          answers,
+          grade,
+          violationCount: prev.session.violations.length,
+          autoSubmittedByViolation,
+        };
       });
     },
     [settings.kkm]
@@ -210,6 +241,16 @@ export function App() {
       active: view.kind === 'teacher' && view.tab === 'monitoring',
       onClick: () => {
         setView({ kind: 'teacher', tab: 'monitoring' });
+        setMobileMenuOpen(false);
+      },
+    },
+    {
+      id: 'integrity',
+      label: 'Deteksi Layar',
+      icon: ShieldAlert,
+      active: view.kind === 'teacher' && view.tab === 'integrity',
+      onClick: () => {
+        setView({ kind: 'teacher', tab: 'integrity' });
         setMobileMenuOpen(false);
       },
     },
@@ -429,7 +470,9 @@ export function App() {
           {view.kind === 'exam' && (
             <ExamView
               session={view.session}
+              maxViolations={settings.maxViolations}
               onUpdateAnswers={handleUpdateExamAnswers}
+              onRecordViolation={handleRecordViolation}
               onSubmitExam={handleSubmitExam}
             />
           )}
@@ -440,6 +483,8 @@ export function App() {
               answers={view.answers}
               grade={view.grade}
               remainingAttempts={remainingAttempts}
+              violationCount={view.violationCount}
+              autoSubmittedByViolation={view.autoSubmittedByViolation}
               onGoHome={() => setView({ kind: 'student_home' })}
               onGoPractice={() => setView({ kind: 'practice', competencyId: 1 })}
               onRetakeExam={handleStartExam}
